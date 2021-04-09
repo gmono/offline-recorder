@@ -80,7 +80,7 @@
       </div>
     </el-dialog>
 
-    <div class="recorder">
+    <div class="recorder" v-loading="stopping">
       <h2>当前录制:{{ recordTime }}</h2>
       <div></div>
       <el-button
@@ -117,17 +117,17 @@
 // import * as wave from "wavesurfer.js";
 
 // import WFPlayer from "wfplayer"
-import { get, set, del ,createStore, clear, keys} from "idb-keyval";
-import {delay} from "ts-pystyle"
+import { get, set, del, createStore, clear, keys } from "idb-keyval";
+import { delay } from "ts-pystyle";
 import filesize from "filesize";
 import store from "store2";
 import * as dayjs from "dayjs";
 const historyKey = "historyBlobs";
 const infoMap = "historyBlobsInfoMap";
-const tempcache="tempcache";
-const cacheStore=createStore(tempcache,tempcache)
+const tempcache = "tempcache";
+const cacheStore = createStore(tempcache, tempcache);
 //录制信息
-const recordingInfo="recordingInfo";
+const recordingInfo = "recordingInfo";
 export default {
   name: "HelloWorld",
   props: {
@@ -148,7 +148,7 @@ export default {
     //loaddata indexs
     this.loadHistoryIdx();
     //加载上次的缓存
-    if(!await this.tempCacheEmpty()){
+    if (!(await this.tempCacheEmpty())) {
       //有上次缓存 恢复上次状态
       await this.startFormTempCache();
     }
@@ -195,7 +195,7 @@ export default {
        */
       nowState: "normal",
       showPlayer: false,
-      stopping:false
+      stopping: false,
     };
   },
   computed: {
@@ -256,7 +256,7 @@ export default {
       let info = this.historyInfoMap[name];
       for (let k in info) {
         let v =
-          k =="startTime"||k=="endTime"
+          k == "startTime" || k == "endTime"
             ? this.formatDate(info[k])
             : k == "length"
             ? this.secondToTime(info[k])
@@ -338,6 +338,11 @@ export default {
      * @param {BlobEvent} d
      */
     async dataavailable(d) {
+      //收到
+      let stopping=this.stopping;
+      if(this.stopping){
+        this.stopping = false;
+      }
       this.blobs.push(d.data);
       this.endTime = new Date();
       console.log(d);
@@ -348,9 +353,9 @@ export default {
       //保存录制信息 用来加载
       await this.storeRecording();
       //如果是最后一帧 执行stopafter并重置停止标志
-      if(this.stopping){
+      if (stopping) {
         await this.stop_after();
-        this.stopping=false;
+        // this.stopping = false;
       }
     },
     async start() {
@@ -362,12 +367,12 @@ export default {
       await this.storeRecording();
       this.stateSwitch("recording");
     },
-    async startFormTempCache(){
-      if(await this.tempCacheEmpty()) throw new Error("不存在上次记录");
-      this.blobs=await this.loadTempCache()
+    async startFormTempCache() {
+      if (await this.tempCacheEmpty()) throw new Error("不存在上次记录");
+      this.blobs = await this.loadTempCache();
       console.log(this.blobs);
       //加载上次保存的录制信息 开始和结束时间
-      let riinfo=await store.get(recordingInfo);
+      let riinfo = await store.get(recordingInfo);
 
       this.startTime = riinfo["startTime"];
       this.endTime = riinfo["endTime"];
@@ -377,19 +382,19 @@ export default {
       //暂停
       this.pause();
     },
-    async storeRecording(){
-      await store.set(recordingInfo,{
-        startTime:this.startTime,
-        endTime:this.endTime
-      })
+    async storeRecording() {
+      await store.set(recordingInfo, {
+        startTime: this.startTime,
+        endTime: this.endTime,
+      });
     },
     /**
      * 添加记录到临时缓存中
      */
-    async addRecordFrame(frame){
+    async addRecordFrame(frame) {
       //这里获取序号是同步执行 保证顺序
-      let tid=this.blobs.length-1;
-      await set(tid,frame,cacheStore); //保存到临时缓存
+      let tid = this.blobs.length - 1;
+      await set(tid, frame, cacheStore); //保存到临时缓存
     },
     resume() {
       /**
@@ -407,37 +412,39 @@ export default {
       record.pause();
       this.stateSwitch("paused");
     },
-    async clearTempCache(){
+    async clearTempCache() {
       await clear(cacheStore);
       //
     },
-    async tempCacheEmpty(){
-      return (await keys(cacheStore)).length==0;
+    async tempCacheEmpty() {
+      return (await keys(cacheStore)).length == 0;
     },
     /**
      * 加载临时缓存 数组 如果是空则返回[]
      */
-    async loadTempCache(){
-      let ret=[];
-      for(let a=0;;a++){
-        let blob=await get(a,cacheStore);
+    async loadTempCache() {
+      let ret = [];
+      for (let a = 0; ; a++) {
+        let blob = await get(a, cacheStore);
         //如果undef 严格=
-        if(blob===undefined){
+        if (blob === undefined) {
           break;
-        }
-        else{
+        } else {
           ret.push(blob);
         }
       }
       return ret;
     },
-    stop(){
+    stop() {
       this.recorder.stop();
       //设定停止标志 接受最后一帧
-      this.stopping=true;
+      this.stopping = true;
       //这里假设没有来的值
       //不等待调用
-      // this.stop_after();
+      delay(2000).then(() => {
+        if(this.stopping)
+          this.stop_after();
+      });
     },
     async stop_after() {
       //停止并结束 结束时需要清空临时缓存器
@@ -460,7 +467,7 @@ export default {
         inputValue: this.nowRecordInfo.id,
       });
       if (res.action == "confirm") {
-        let id=this.nowRecordInfo.id;
+        let id = this.nowRecordInfo.id;
         await this.renameItem(this.nowRecordInfo.id, res.value);
         this.loadNow(res.value, await this.readHistoryItem(id));
       } else {
@@ -477,8 +484,10 @@ export default {
       await this.playlist_del(this.nowRecordInfo.id);
     },
     async clear() {
-      let res=await this.$confirm("确定要清除所有记录吗?",{type:"warning"})
-      if(res=="confirm") this.clearHistroy();
+      let res = await this.$confirm("确定要清除所有记录吗?", {
+        type: "warning",
+      });
+      if (res == "confirm") this.clearHistroy();
     },
     //tools
     downloadUrl(name, url) {
@@ -556,10 +565,10 @@ export default {
       //删除数据
       // console.log(this.historyBlobsIdx);
       for (let a of this.historyBlobsIdx) {
-        await del(historyKey+a);
+        await del(historyKey + a);
       }
       store.remove(historyKey);
-      store.remove(infoMap)
+      store.remove(infoMap);
       this.clearNow();
       //
       this.loadHistoryIdx();
@@ -614,9 +623,9 @@ export default {
   height: 500px;
   margin: auto;
 }
-@media screen and (max-width:800px){
-  .recorder{
-    width:100%;
+@media screen and (max-width: 800px) {
+  .recorder {
+    width: 100%;
   }
 }
 .player {
