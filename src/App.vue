@@ -1,6 +1,27 @@
 <template>
   <div id="app">
     <h1>离线录音机</h1>
+    <el-card shadow="never">
+      一款直接在浏览器中运行的录音机，数据离线实时保存
+      <ul style="list-style:none">
+        <li>
+          断电，关闭浏览器或录音时间过长超出内存等问题，都不丢失数据，重新打开继续录
+        </li>
+        <li>
+          数据保存在浏览器中，存储在本地电脑上，保护隐私
+        </li>
+        <li>
+          支持同时录多份录音文件，不会出现不下载就消失的情况
+        </li>
+        <li>
+          在线播放器，可在线预览，选择下载
+        </li>
+        <li>
+          自动记录额外信息，如录音时间段，长度大小等
+        </li>
+      </ul>
+    </el-card>
+    <div style="margin-top:2rem"></div>
     <div>
       <HelloWorld msg="Welcome to Your Vue.js App" />
     </div>

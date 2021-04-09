@@ -556,7 +556,7 @@ export default {
       //删除数据
       // console.log(this.historyBlobsIdx);
       for (let a of this.historyBlobsIdx) {
-        await del(a);
+        await del(historyKey+a);
       }
       store.remove(historyKey);
       this.clearNow();
