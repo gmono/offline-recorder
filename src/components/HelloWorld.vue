@@ -446,15 +446,16 @@ export default {
     stop() {
       this.recorder.stop();
       //设定停止标志 接受最后一帧
-      this.stopping = true;
+      // this.stopping = true;
       //这里假设没有来的值
       //不等待调用
-      delay(1500).then(() => {
-        //还没关闭
-        if(this.stopping)
-          this.stopping=false;
-          this.stop_after();
-      });
+      // delay(1500).then(() => {
+      //   //还没关闭
+      //   if(this.stopping)
+      //     this.stopping=false;
+      //     this.stop_after();
+      // });
+      this.stop_after();
     },
     async stop_after() {
       //停止并结束 结束时需要清空临时缓存器
