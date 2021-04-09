@@ -559,6 +559,7 @@ export default {
         await del(historyKey+a);
       }
       store.remove(historyKey);
+      store.remove(infoMap)
       this.clearNow();
       //
       this.loadHistoryIdx();
