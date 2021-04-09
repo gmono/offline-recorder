@@ -341,6 +341,9 @@ export default {
      * @param {BlobEvent} d
      */
     async dataavailable(d) {
+      if(this.stopping){
+        return;
+      }
       //收到
       let stopping=this.stopping;
       if(this.stopping){
@@ -455,7 +458,10 @@ export default {
       //     this.stopping=false;
       //     this.stop_after();
       // });
-      this.stop_after();
+      this.stopping=true;
+      this.stop_after().then(()=>{
+        this.stopping=false;
+      });
     },
     async stop_after() {
       //停止并结束 结束时需要清空临时缓存器
