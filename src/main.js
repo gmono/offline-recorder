@@ -10,6 +10,7 @@ Vue.use(VueFilterDateFormat);
 import VueLocalStorage from 'vue-localstorage'
 
 import asynccomputed from "vue-async-computed"
+import './registerServiceWorker'
 Vue.use(asynccomputed)
 
 // Or you can specify any other name and use it via this.$ls, this.$whatEverYouWant
