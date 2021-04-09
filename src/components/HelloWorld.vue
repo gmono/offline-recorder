@@ -9,6 +9,7 @@
           <div v-if="nowRecordInfo != null">
             <el-card shadow="never">
               <div>名称:{{ nowRecordInfo["name"] }}</div>
+              <div>ID:{{ nowRecordInfo["id"] }}</div>
               <div>长度:{{ secondToTime(nowRecordInfo["length"]) }}</div>
               <div>开始时间:{{ formatDate(nowRecordInfo["startTime"]) }}</div>
               <div>结束时间:{{ formatDate(nowRecordInfo["endTime"]) }}</div>
@@ -20,11 +21,7 @@
           <div style="margin-top: 2rem"></div>
 
           <div>
-            <el-button
-              type="danger"
-              @click="download"
-              >下载</el-button
-            >
+            <el-button type="danger" @click="download">下载</el-button>
             <el-button type="primary" @click="clear">清除历史记录</el-button>
           </div>
 
@@ -37,10 +34,21 @@
         <div class="player_list">
           <el-table border :data="playList">
             <el-table-column label="名称" prop="name"></el-table-column>
+            <el-table-column
+              width="150px"
+              label="大小"
+              prop="size"
+            ></el-table-column>
+            <el-table-column
+              width="100px"
+              label="长度"
+              prop="length"
+            ></el-table-column>
+
             <el-table-column label="操作">
               <template slot-scope="scope">
                 <el-button
-                  @click="select(scope.row.name)"
+                  @click="select(scope.row.id)"
                   type="primary"
                   size="small"
                   >查看</el-button
@@ -48,22 +56,19 @@
                 <el-button
                   type="danger"
                   size="small"
-                  @click="playlist_del(scope.row.name)"
+                  @click="playlist_del(scope.row.id)"
                   >删除</el-button
                 >
                 <el-button
                   type="success"
                   size="small"
-                  @click="playlist_download(scope.row.name)"
+                  @click="playlist_download(scope.row.id)"
                   >下载</el-button
                 >
                 <el-tooltip placement="top">
                   <template slot="content">
-                    <div
-                      v-for="(i, k) in historyInfoMap[scope.row.name]"
-                      :key="k"
-                    >
-                      {{ k }}:{{ i }}
+                    <div v-for="(i, k) in info_generate(scope.row.id)" :key="k">
+                      {{ i }}
                     </div>
                   </template>
                   <el-button type="info" size="small">信息</el-button>
@@ -112,11 +117,17 @@
 // import * as wave from "wavesurfer.js";
 
 // import WFPlayer from "wfplayer"
-import { get, set, del } from "idb-keyval";
+import { get, set, del ,createStore, clear, keys} from "idb-keyval";
+import {delay} from "ts-pystyle"
+import filesize from "filesize";
 import store from "store2";
 import * as dayjs from "dayjs";
 const historyKey = "historyBlobs";
 const infoMap = "historyBlobsInfoMap";
+const tempcache="tempcache";
+const cacheStore=createStore(tempcache,tempcache)
+//录制信息
+const recordingInfo="recordingInfo";
 export default {
   name: "HelloWorld",
   props: {
@@ -136,7 +147,11 @@ export default {
     this.recorder = recorder;
     //loaddata indexs
     this.loadHistoryIdx();
-    //加载播放器
+    //加载上次的缓存
+    if(!await this.tempCacheEmpty()){
+      //有上次缓存 恢复上次状态
+      await this.startFormTempCache();
+    }
   },
   data() {
     return {
@@ -147,6 +162,7 @@ export default {
       endTime: new Date(),
       //当前录音信息
       // nowRecordInfo: {
+      //   id:"",
       //   name: null,
       //   startTime: new Date(),
       //   endTime: new Date(),
@@ -179,6 +195,7 @@ export default {
        */
       nowState: "normal",
       showPlayer: false,
+      stopping:false
     };
   },
   computed: {
@@ -188,12 +205,30 @@ export default {
         .subtract(8, "hours")
         .format("HH:mm:ss");
     },
-    playList() {
-      return this.historyBlobsIdx.map((item) => {
-        return {
-          name: item,
-        };
-      });
+    // playList() {
+    //   return this.historyBlobsIdx.map((item) => {
+    //     return {
+    //       name: item,
+    //     };
+    //   });
+    // },
+  },
+  asyncComputed: {
+    async playList() {
+      return await Promise.all(
+        this.historyBlobsIdx.map(async (v) => {
+          /**
+           * @type {Blob}
+           */
+          let b = await this.readHistoryItem(v);
+          return {
+            name: this.historyInfoMap[v].name,
+            id: v,
+            size: filesize(b.size),
+            length: this.secondToTime(this.historyInfoMap[v].length),
+          };
+        })
+      );
     },
   },
   methods: {
@@ -217,29 +252,38 @@ export default {
       return dayjs(0).second(i).subtract(8, "hours").format("HH:mm:ss");
     },
     info_generate(name) {
-      let text = "";
+      let text = [];
       let info = this.historyInfoMap[name];
       for (let k in info) {
-        text += `${k}:${info[k]}\n`;
+        let v =
+          k =="startTime"||k=="endTime"
+            ? this.formatDate(info[k])
+            : k == "length"
+            ? this.secondToTime(info[k])
+            : info[k];
+        text.push(`${k}：${v}`);
       }
       return text;
     },
     //playlist
-    async playlist_del(name) {
-      let res = await this.$confirm("是否要删除:" + name + "?");
+    async playlist_del(id) {
+      let info = this.historyInfoMap[id];
+      let res = await this.$confirm("是否要删除:" + info.name + "?");
       if (res == "confirm") {
         //如果是删除的当前的就自动清除当前
-        if (name == this.nowRecordInfo.name) {
+        if (id == this.nowRecordInfo.id) {
           this.clearNow();
         }
-        await this.removeItem(name);
+        await this.removeItem(id);
       }
     },
-    async playlist_download(name) {
-      this.$message.info("已开始下载：" + name);
+    async playlist_download(id) {
+      let info = this.historyInfoMap[id];
+
+      this.$message.info("已开始下载：" + info.name);
       this.downloadUrl(
-        name,
-        URL.createObjectURL(await this.readHistoryItem(name))
+        info.name,
+        URL.createObjectURL(await this.readHistoryItem(id))
       );
     },
     //
@@ -293,18 +337,59 @@ export default {
     /**
      * @param {BlobEvent} d
      */
-    dataavailable(d) {
+    async dataavailable(d) {
       this.blobs.push(d.data);
       this.endTime = new Date();
       console.log(d);
+      //自动保存
+      // let tid=this.formatDate(new Date());
+      //添加一个录制帧
+      await this.addRecordFrame(d.data);
+      //保存录制信息 用来加载
+      await this.storeRecording();
+      //如果是最后一帧 执行stopafter并重置停止标志
+      if(this.stopping){
+        await this.stop_after();
+        this.stopping=false;
+      }
     },
-    start() {
+    async start() {
       this.clearNow();
       this.startTime = new Date();
       this.endTime = new Date();
       this.recorder.start(1000);
       //state
+      await this.storeRecording();
       this.stateSwitch("recording");
+    },
+    async startFormTempCache(){
+      if(await this.tempCacheEmpty()) throw new Error("不存在上次记录");
+      this.blobs=await this.loadTempCache()
+      console.log(this.blobs);
+      //加载上次保存的录制信息 开始和结束时间
+      let riinfo=await store.get(recordingInfo);
+
+      this.startTime = riinfo["startTime"];
+      this.endTime = riinfo["endTime"];
+      this.recorder.start(1000);
+      //state
+      this.stateSwitch("recording");
+      //暂停
+      this.pause();
+    },
+    async storeRecording(){
+      await store.set(recordingInfo,{
+        startTime:this.startTime,
+        endTime:this.endTime
+      })
+    },
+    /**
+     * 添加记录到临时缓存中
+     */
+    async addRecordFrame(frame){
+      //这里获取序号是同步执行 保证顺序
+      let tid=this.blobs.length-1;
+      await set(tid,frame,cacheStore); //保存到临时缓存
     },
     resume() {
       /**
@@ -322,24 +407,62 @@ export default {
       record.pause();
       this.stateSwitch("paused");
     },
-    async stop() {
+    async clearTempCache(){
+      await clear(cacheStore);
+      //
+    },
+    async tempCacheEmpty(){
+      return (await keys(cacheStore)).length==0;
+    },
+    /**
+     * 加载临时缓存 数组 如果是空则返回[]
+     */
+    async loadTempCache(){
+      let ret=[];
+      for(let a=0;;a++){
+        let blob=await get(a,cacheStore);
+        //如果undef 严格=
+        if(blob===undefined){
+          break;
+        }
+        else{
+          ret.push(blob);
+        }
+      }
+      return ret;
+    },
+    stop(){
       this.recorder.stop();
+      //设定停止标志 接受最后一帧
+      this.stopping=true;
+      //这里假设没有来的值
+      //不等待调用
+      // this.stop_after();
+    },
+    async stop_after() {
+      //停止并结束 结束时需要清空临时缓存器
+      // this.recorder.stop();
+      //放开控制权 让最后一帧进来
+      await delay(0);
       this.stateSwitch("merging");
       //mergeblobs
       console.log(this.blobs);
       this.mergeBlobs(this.blobs);
       //加入历史
       this.pushToHistory();
+      //清除临时缓存
+      await this.clearTempCache();
       //切换
       this.stateSwitch("stopped");
       //重命名
       let res = await this.$prompt("请输入名称:", "命名录音", {
         showCancelButton: false,
-        inputValue: this.nowRecordInfo.name,
+        inputValue: this.nowRecordInfo.id,
       });
       if (res.action == "confirm") {
-        await this.renameItem(this.nowRecordInfo.name, res.value);
-        this.loadNow(res.value, await this.readHistoryItem());
+        let id=this.nowRecordInfo.id;
+        await this.renameItem(this.nowRecordInfo.id, res.value);
+        this.loadNow(res.value, await this.readHistoryItem(id));
       } else {
         await this.$alert("错误");
       }
@@ -351,10 +474,11 @@ export default {
       }
     },
     async removeNow() {
-      await this.playlist_del(this.nowRecordInfo.name);
+      await this.playlist_del(this.nowRecordInfo.id);
     },
-    clear() {
-      this.clearHistroy();
+    async clear() {
+      let res=await this.$confirm("确定要清除所有记录吗?",{type:"warning"})
+      if(res=="confirm") this.clearHistroy();
     },
     //tools
     downloadUrl(name, url) {
@@ -371,11 +495,13 @@ export default {
       let ablobs = new Blob(blobs, { type: "audio/webm" });
       this.src = URL.createObjectURL(ablobs);
       this.mergedBlob = ablobs;
-      //合并完成并产生关于此次录音的信息
+      //合并完成并产生关于此次录音的信息 id用于存储
+      let id = `record_${dayjs(this.startTime).format(
+        "YYYY-MM-DD hh:mm:ss"
+      )}_${dayjs(this.endTime).format("YYYY-MM-DD hh:mm:ss")}`;
       this.nowRecordInfo = {
-        name: `record_${dayjs(this.startTime).format(
-          "YYYY-MM-DD hh:mm:ss"
-        )}_${dayjs(this.endTime).format("YYYY-MM-DD hh:mm:ss")}`,
+        name: id,
+        id: id,
         startTime: this.startTime,
         endTime: this.endTime,
         //暂时不赋值
@@ -400,22 +526,22 @@ export default {
       this.src = URL.createObjectURL(blob);
     },
     async pushToHistory() {
-      if (this.historyBlobsIdx.indexOf(this.nowRecordInfo.name) != -1) {
+      if (this.historyBlobsIdx.indexOf(this.nowRecordInfo.id) != -1) {
         throw new Error("已经存在同名历史记录");
       }
-      if (this.mergedBlob == null || this.nowRecordInfo.name == null)
+      if (this.mergedBlob == null || this.nowRecordInfo.id == null)
         throw new Error("错误调用");
       //添加历史记录并存储
       await this.addItem(this.nowRecordInfo, this.mergedBlob);
     },
     async addItem(info, blob) {
-      this.historyBlobsIdx.push(info.name);
+      this.historyBlobsIdx.push(info.id);
       store(historyKey, this.historyBlobsIdx);
       //存储信息对象
-      this.historyInfoMap[info.name] = info;
+      this.historyInfoMap[info.id] = info;
       store(infoMap, this.historyInfoMap);
       //对实际数据进行存储 自动添加前缀
-      await set(historyKey + info.name, blob);
+      await set(historyKey + info.id, blob);
     },
     /**
      * 加载历史索引表
@@ -464,13 +590,13 @@ export default {
     /**
      * 重命名一个item
      */
-    async renameItem(name, newName) {
-      if (this.historyBlobsIdx.indexOf(name) == -1)
+    async renameItem(id, newName) {
+      if (this.historyBlobsIdx.indexOf(id) == -1)
         throw new Error("没有这个记录");
-      let blob = await this.readHistoryItem(name);
+      let blob = await this.readHistoryItem(id);
       //删除并重新存储
-      let info = this.historyInfoMap[name];
-      await this.removeItem(name);
+      let info = this.historyInfoMap[id];
+      await this.removeItem(id);
       //重新存储
       info.name = newName;
       await this.addItem(info, blob);
@@ -487,17 +613,24 @@ export default {
   height: 500px;
   margin: auto;
 }
-
+@media screen and (max-width:800px){
+  .recorder{
+    width:100%;
+  }
+}
 .player {
   display: flex;
+  flex-wrap: wrap;
 }
 .player_info {
   border: #e4e7ed solid 1px;
   flex: 2;
   margin-right: 2rem;
   padding: 1rem 3rem;
+  min-width: 300px;
 }
 .player_list {
   flex: 3;
+  min-width: 900px;
 }
 </style>
