@@ -449,7 +449,7 @@ export default {
       this.stopping = true;
       //这里假设没有来的值
       //不等待调用
-      delay(1000).then(() => {
+      delay(1500).then(() => {
         //还没关闭
         if(this.stopping)
           this.stopping=false;
