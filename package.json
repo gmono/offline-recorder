@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@types/dom-mediacapture-record": "^1.0.7",
+    "@types/wavesurfer.js": "^3.3.2",
     "@vuejs-community/vue-filter-date-format": "^1.6.3",
     "core-js": "^3.6.5",
     "dayjs": "^1.10.4",
@@ -17,7 +18,10 @@
     "store2": "^2.12.0",
     "vue": "^2.6.11",
     "vue-async-computed": "^3.9.0",
-    "vue-localstorage": "^0.6.2"
+    "vue-localstorage": "^0.6.2",
+    "wavesurfer": "^1.3.4",
+    "wavesurfer.js": "^4.6.0",
+    "wfplayer": "^1.1.4"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.5.0",
