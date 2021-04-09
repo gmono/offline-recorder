@@ -80,7 +80,7 @@
       </div>
     </el-dialog>
 
-    <div class="recorder" v-loading="stopping">
+    <div class="recorder" v-loading="stopping||loading">
       <h2>当前录制:{{ recordTime }}</h2>
       <div></div>
       <el-button
@@ -150,11 +150,14 @@ export default {
     //加载上次的缓存
     if (!(await this.tempCacheEmpty())) {
       //有上次缓存 恢复上次状态
+      this.loading=true;
       await this.startFormTempCache();
+      this.loading=false;
     }
   },
   data() {
     return {
+      loading:false,
       //player
       player: null,
       //
@@ -370,7 +373,7 @@ export default {
     async startFormTempCache() {
       if (await this.tempCacheEmpty()) throw new Error("不存在上次记录");
       this.blobs = await this.loadTempCache();
-      console.log(this.blobs);
+      // console.log(this.blobs);
       //加载上次保存的录制信息 开始和结束时间
       let riinfo = await store.get(recordingInfo);
 
@@ -453,7 +456,7 @@ export default {
       await delay(0);
       this.stateSwitch("merging");
       //mergeblobs
-      console.log(this.blobs);
+      // console.log(this.blobs);
       this.mergeBlobs(this.blobs);
       //加入历史
       this.pushToHistory();
