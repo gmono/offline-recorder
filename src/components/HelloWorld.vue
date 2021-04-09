@@ -117,7 +117,7 @@
 // import * as wave from "wavesurfer.js";
 
 // import WFPlayer from "wfplayer"
-import { get, set, del, createStore, clear, keys } from "idb-keyval";
+import { get, set, del, createStore, clear, keys, entries } from "idb-keyval";
 import { delay } from "ts-pystyle";
 import filesize from "filesize";
 import store from "store2";
@@ -426,16 +426,21 @@ export default {
      * 加载临时缓存 数组 如果是空则返回[]
      */
     async loadTempCache() {
-      let ret = [];
-      for (let a = 0; ; a++) {
-        let blob = await get(a, cacheStore);
-        //如果undef 严格=
-        if (blob === undefined) {
-          break;
-        } else {
-          ret.push(blob);
-        }
-      }
+      let ents=await entries(cacheStore);
+      ents=ents.sort((a,b)=>{
+        a[0]-b[0];
+      })
+      // console.log(ents)
+      let ret = ents.map(v=>v[1]);
+      // for (let a = 0; ; a++) {
+      //   let blob = await get(a, cacheStore);
+      //   //如果undef 严格=
+      //   if (blob === undefined) {
+      //     break;
+      //   } else {
+      //     ret.push(blob);
+      //   }
+      // }
       return ret;
     },
     stop() {
