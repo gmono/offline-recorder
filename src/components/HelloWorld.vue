@@ -32,8 +32,9 @@
           </div> -->
         </div>
         <div class="player_list">
-          <el-table border :data="playList">
+          <el-table max-height="600" border :data="playList">
             <el-table-column label="名称" prop="name"></el-table-column>
+            <el-table-column label="开始时间" prop="startTime" sortable=""></el-table-column>
             <el-table-column
               width="150px"
               label="大小"
@@ -117,7 +118,7 @@
 // import * as wave from "wavesurfer.js";
 
 // import WFPlayer from "wfplayer"
-import { get, set, del, createStore, clear, keys, entries } from "idb-keyval";
+import { get, set, del, createStore, clear, entries } from "idb-keyval";
 import { delay } from "ts-pystyle";
 import filesize from "filesize";
 import store from "store2";
@@ -134,6 +135,8 @@ export default {
     msg: String,
   },
   async mounted() {
+    this.loading=true;
+
     let stream = await navigator.mediaDevices.getUserMedia({
       audio: true,
       video: false,
@@ -154,6 +157,7 @@ export default {
       await this.startFormTempCache();
       this.loading=false;
     }
+    this.loading=false;
   },
   data() {
     return {
@@ -229,6 +233,7 @@ export default {
             id: v,
             size: filesize(b.size),
             length: this.secondToTime(this.historyInfoMap[v].length),
+            startTime:this.historyInfoMap[v].startTime
           };
         })
       );
@@ -423,7 +428,8 @@ export default {
       //
     },
     async tempCacheEmpty() {
-      return (await keys(cacheStore)).length == 0;
+      // return (await keys(cacheStore)).length == 0;
+      return (await get(0,cacheStore))==undefined;
     },
     /**
      * 加载临时缓存 数组 如果是空则返回[]

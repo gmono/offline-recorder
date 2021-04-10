@@ -7,6 +7,7 @@
         切记本录音机不能在同一浏览器上同时打开两个，否则会造成存储混乱，对数据产生不可预测破坏
       </h3>
       <h3>请勿清除浏览器记录，录音文件及时下载防止丢失</h3>
+      <h3>录音占用空间过大或一次录音时间过长时可能发生存储加载延迟，出现播放列表短暂不显示，等待一段时间即可</h3>
       <el-card class="inner-card" style="max-width: 800px; margin: auto">
         <div slot="header">
           <span class="feature-text">特性</span>
