@@ -139,12 +139,24 @@
         >删除</el-button
       >
       <el-button type="warning" @click="show_player">显示播放器</el-button>
+      <el-divider></el-divider>
+      <!-- 录音时操作 -->
+      <el-button style="margin-right:2rem" type="primary" v-if="nowState=='recording'">添加标记点(空格键添加)</el-button>
+      <el-button type="primary" v-if="nowState=='recording'||nowState=='paused'">添加笔记</el-button>
+      <!-- 笔记编辑部分 -->
     </div>
   </div>
 </template>
 
 <script>
 // import * as wave from "wavesurfer.js";
+//标记点类型：point pause 表示手动添加的和暂停时自动添加的
+//标记点中的内容 ，可修改，note:markdown格式保存的原始笔 string
+// pointTime 添加时间
+//可以给录音添加描述，存储在元数据中
+//标记点的信息存储在元数据的points字段中
+//目前设计为一次性读取所有录音的所有标记点（由于是文本占用内存不多）
+//因此限制笔记长度为500字
 
 // import WFPlayer from "wfplayer"
 import { get, set, del, createStore, clear, entries } from "idb-keyval";
