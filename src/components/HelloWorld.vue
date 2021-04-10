@@ -32,9 +32,23 @@
           </div> -->
         </div>
         <div class="player_list">
-          <el-table  max-height="600" border :data="playList" default-sort="startTime">
-            <el-table-column label="名称" prop="name" sortable=""></el-table-column>
-            <el-table-column label="开始时间" width="160px" prop="startTime" sortable="">
+          <el-table
+            max-height="600"
+            border
+            :data="playList"
+            default-sort="startTime"
+          >
+            <el-table-column
+              label="名称"
+              prop="name"
+              sortable=""
+            ></el-table-column>
+            <el-table-column
+              label="开始时间"
+              width="160px"
+              prop="startTime"
+              sortable=""
+            >
               <template slot-scope="scope">
                 <div>{{ formatDate(scope.row.startTime) }}</div>
               </template>
@@ -44,7 +58,12 @@
                 <div>{{ filesize(scope.row.size) }}</div>
               </template>
             </el-table-column>
-            <el-table-column width="100px" label="长度" prop="length" sortable="">
+            <el-table-column
+              width="100px"
+              label="长度"
+              prop="length"
+              sortable=""
+            >
               <template slot-scope="scope">
                 <div>{{ secondToTime(scope.row.length) }}</div>
               </template>
@@ -70,14 +89,20 @@
                   @click="playlist_download(scope.row.id)"
                   >下载</el-button
                 >
-                <el-tooltip placement="top">
+                <el-button
+                  type="info"
+                  size="small"
+                  @click="playlist_rename(scope.row.id)"
+                  >重命名</el-button
+                >
+                <!-- <el-tooltip placement="top">
                   <template slot="content">
                     <div v-for="(i, k) in info_generate(scope.row.id)" :key="k">
                       {{ i }}
                     </div>
                   </template>
                   <el-button type="info" size="small">信息</el-button>
-                </el-tooltip>
+                </el-tooltip> -->
               </template>
             </el-table-column>
           </el-table>
@@ -304,6 +329,18 @@ export default {
         URL.createObjectURL(await this.readHistoryItem(id))
       );
     },
+    async playlist_rename(id) {
+      //重命名
+      let res = await this.$prompt("请输入名称:", "命名录音", {
+        showCancelButton: false,
+        inputValue: this.historyInfoMap[id].name,
+      });
+      if (res.action == "confirm") {
+        await this.renameItem(id, res.value);
+      } else {
+        await this.$alert("错误");
+      }
+    },
     //
     play() {
       /**
@@ -502,7 +539,7 @@ export default {
       if (res.action == "confirm") {
         let id = this.nowRecordInfo.id;
         await this.renameItem(this.nowRecordInfo.id, res.value);
-        this.loadNow(res.value, await this.readHistoryItem(id));
+        this.loadNow(id, await this.readHistoryItem(id));
       } else {
         await this.$alert("错误");
       }
@@ -560,11 +597,11 @@ export default {
         this.nowRecordInfo = null;
       }
     },
-    loadNow(name, blob) {
+    loadNow(id, blob) {
       this.clearNow();
       this.mergedBlob = blob;
       this.blobs = [];
-      this.nowRecordInfo = this.historyInfoMap[name];
+      this.nowRecordInfo = this.historyInfoMap[id];
       this.src = URL.createObjectURL(blob);
     },
     async pushToHistory() {
@@ -674,6 +711,6 @@ export default {
 }
 .player_list {
   flex: 3;
-  min-width: 950px;
+  min-width: 980px;
 }
 </style>
