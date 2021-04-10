@@ -32,21 +32,25 @@
           </div> -->
         </div>
         <div class="player_list">
-          <el-table max-height="600" border :data="playList">
-            <el-table-column label="名称" prop="name"></el-table-column>
-            <el-table-column label="开始时间" prop="startTime" sortable=""></el-table-column>
-            <el-table-column
-              width="150px"
-              label="大小"
-              prop="size"
-            ></el-table-column>
-            <el-table-column
-              width="100px"
-              label="长度"
-              prop="length"
-            ></el-table-column>
+          <el-table  max-height="600" border :data="playList" default-sort="startTime">
+            <el-table-column label="名称" prop="name" sortable=""></el-table-column>
+            <el-table-column label="开始时间" width="160px" prop="startTime" sortable="">
+              <template slot-scope="scope">
+                <div>{{ formatDate(scope.row.startTime) }}</div>
+              </template>
+            </el-table-column>
+            <el-table-column width="130px" label="大小" prop="size" sortable="">
+              <template slot-scope="scope">
+                <div>{{ filesize(scope.row.size) }}</div>
+              </template>
+            </el-table-column>
+            <el-table-column width="100px" label="长度" prop="length" sortable="">
+              <template slot-scope="scope">
+                <div>{{ secondToTime(scope.row.length) }}</div>
+              </template>
+            </el-table-column>
 
-            <el-table-column label="操作">
+            <el-table-column label="操作" align="right" header-align="center">
               <template slot-scope="scope">
                 <el-button
                   @click="select(scope.row.id)"
@@ -81,7 +85,7 @@
       </div>
     </el-dialog>
 
-    <div class="recorder" v-loading="stopping||loading">
+    <div class="recorder" v-loading="stopping || loading">
       <h2>当前录制:{{ recordTime }}</h2>
       <div></div>
       <el-button
@@ -135,7 +139,7 @@ export default {
     msg: String,
   },
   async mounted() {
-    this.loading=true;
+    this.loading = true;
 
     let stream = await navigator.mediaDevices.getUserMedia({
       audio: true,
@@ -153,15 +157,15 @@ export default {
     //加载上次的缓存
     if (!(await this.tempCacheEmpty())) {
       //有上次缓存 恢复上次状态
-      this.loading=true;
+      this.loading = true;
       await this.startFormTempCache();
-      this.loading=false;
+      this.loading = false;
     }
-    this.loading=false;
+    this.loading = false;
   },
   data() {
     return {
-      loading:false,
+      loading: false,
       //player
       player: null,
       //
@@ -231,15 +235,21 @@ export default {
           return {
             name: this.historyInfoMap[v].name,
             id: v,
-            size: filesize(b.size),
-            length: this.secondToTime(this.historyInfoMap[v].length),
-            startTime:this.historyInfoMap[v].startTime
+            size: b.size,
+            length: this.historyInfoMap[v].length,
+            startTime: this.historyInfoMap[v].startTime,
           };
         })
       );
     },
   },
   methods: {
+    /**
+     * 代理以在模板中用
+     */
+    filesize(s) {
+      return filesize(s);
+    },
     show_player() {
       this.showPlayer = true;
       //在显示对话框后创建播放器
@@ -346,12 +356,12 @@ export default {
      * @param {BlobEvent} d
      */
     async dataavailable(d) {
-      if(this.stopping){
+      if (this.stopping) {
         return;
       }
       //收到
-      let stopping=this.stopping;
-      if(this.stopping){
+      let stopping = this.stopping;
+      if (this.stopping) {
         this.stopping = false;
       }
       this.blobs.push(d.data);
@@ -429,18 +439,18 @@ export default {
     },
     async tempCacheEmpty() {
       // return (await keys(cacheStore)).length == 0;
-      return (await get(0,cacheStore))==undefined;
+      return (await get(0, cacheStore)) == undefined;
     },
     /**
      * 加载临时缓存 数组 如果是空则返回[]
      */
     async loadTempCache() {
-      let ents=await entries(cacheStore);
-      ents=ents.sort((a,b)=>{
-        a[0]-b[0];
-      })
+      let ents = await entries(cacheStore);
+      ents = ents.sort((a, b) => {
+        a[0] - b[0];
+      });
       // console.log(ents)
-      let ret = ents.map(v=>v[1]);
+      let ret = ents.map((v) => v[1]);
       // for (let a = 0; ; a++) {
       //   let blob = await get(a, cacheStore);
       //   //如果undef 严格=
@@ -464,9 +474,9 @@ export default {
       //     this.stopping=false;
       //     this.stop_after();
       // });
-      this.stopping=true;
-      this.stop_after().then(()=>{
-        this.stopping=false;
+      this.stopping = true;
+      this.stop_after().then(() => {
+        this.stopping = false;
       });
     },
     async stop_after() {
@@ -664,6 +674,6 @@ export default {
 }
 .player_list {
   flex: 3;
-  min-width: 900px;
+  min-width: 950px;
 }
 </style>
