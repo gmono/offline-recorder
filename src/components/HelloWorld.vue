@@ -372,7 +372,7 @@ export default {
     select(k) {
       console.log(k);
       //清除当前持有的录音(注意此函数不能在录音时调用否则丢失数据)
-      if (this.nowState == "recording") {
+      if (this.nowState == "recording"||this.nowState=="paused") {
         this.$message.error("不能在录音时进行播放，请先停止录音");
         return;
       }
