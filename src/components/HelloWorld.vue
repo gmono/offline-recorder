@@ -328,6 +328,11 @@ export default {
         info.name,
         URL.createObjectURL(await this.readHistoryItem(id))
       );
+      //下载信息文件
+      this.downloadUrl(
+        info.name + ".json",
+        URL.createObjectURL(new Blob([JSON.stringify(info)]))
+      );
     },
     async playlist_rename(id) {
       //重命名
@@ -372,7 +377,7 @@ export default {
     select(k) {
       console.log(k);
       //清除当前持有的录音(注意此函数不能在录音时调用否则丢失数据)
-      if (this.nowState == "recording"||this.nowState=="paused") {
+      if (this.nowState == "recording" || this.nowState == "paused") {
         this.$message.error("不能在录音时进行播放，请先停止录音");
         return;
       }
@@ -548,6 +553,10 @@ export default {
       if (this.src != "") {
         this.$message.info("已开始下载：" + this.nowRecordInfo.name);
         this.downloadUrl(this.nowRecordInfo.name, this.src);
+        this.downloadUrl(
+          this.nowRecordInfo.name + ".json",
+          URL.createObjectURL(new Blob([JSON.stringify(this.nowRecordInfo)]))
+        );
       }
     },
     async removeNow() {
