@@ -24,19 +24,15 @@
     </el-card>
     <div style="margin-top: 2rem"></div>
     <div>
-      <HelloWorld msg="Welcome to Your Vue.js App" />
+      <router-view></router-view>
     </div>
   </div>
 </template>
 
 <script>
-import HelloWorld from "./components/HelloWorld.vue";
 
 export default {
   name: "App",
-  components: {
-    HelloWorld,
-  },
 };
 </script>
 
