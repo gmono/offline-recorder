@@ -2,13 +2,13 @@
   <div id="app">
     <h1>离线录音机</h1>
     <el-card shadow="never">
-      一款直接在浏览器中运行的录音机，数据离线实时保存
+      一款直接在浏览器中运行的录音机，数据离线实时保存（尚未适配手机）
       <h3>
         切记本录音机不能在同一浏览器上同时打开两个，否则会造成存储混乱，对数据产生不可预测破坏
       </h3>
       <h3>请勿清除浏览器记录，录音文件及时下载防止丢失</h3>
       <h3>录音占用空间过大或一次录音时间过长时可能发生存储加载延迟，出现播放列表短暂不显示，等待一段时间即可</h3>
-      <el-card class="inner-card" style="max-width: 800px; margin: auto">
+      <el-card class="inner-card" style="max-width: 800px; margin: auto;list-style: none;">
         <div slot="header">
           <span class="feature-text">特性</span>
         </div>
@@ -19,6 +19,7 @@
         <li>支持同时录多份录音文件，不会出现不下载就消失的情况</li>
         <li>在线播放器，可在线预览，选择下载</li>
         <li>自动记录额外信息，如录音时间段，长度大小等</li>
+        <li>可添加为WebApp（打开Chrome浏览器点击地址栏右侧“安装recorder"，手机可打开手机版Chrome后，根据底部提示操作）</li>
       </el-card>
     </el-card>
     <div style="margin-top: 2rem"></div>
