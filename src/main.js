@@ -20,11 +20,11 @@ Vue.use(Vuex)
 
 const store = new Vuex.Store({
   state: {
-    count: 0
+    countA: 0
   },
   mutations: {
     increment(state) {
-      state.count++
+      state.countA++
     }
   }
 })
@@ -33,8 +33,10 @@ import VueRouter from "vue-router"
 import Recorder from "./components/HelloWorld"
 //router
 Vue.use(VueRouter)
+import Center from "./components/Center"
 const routes = [
-  { path: '/', component: Recorder }
+  { path: '/', component: Recorder },
+  {path:"/center",component:Center}
 ]
 
 // 3. 创建 router 实例，然后传 `routes` 配置

@@ -1,5 +1,6 @@
 <template>
   <div class="hello">
+    <router-link to="/center">测试</router-link>
     <el-dialog :visible.sync="showPlayer" fullscreen>
       <div class="player">
         <div class="player_info">
