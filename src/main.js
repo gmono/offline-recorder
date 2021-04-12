@@ -15,12 +15,32 @@ Vue.use(asynccomputed)
 import Vuex from 'vuex'
 
 Vue.use(Vuex)
+import * as _ from "lodash"
 
+//从store中获取一个item 由于带参数难以放在store中 考虑mobx
+function getHistoryItem(state,){
 
+}
 
 const store = new Vuex.Store({
   state: {
-    countA: 0
+    countA: 0,
+    //当前录音信息
+    recording:{
+      info:{},
+      blobs:[]
+    },
+    history:{
+      //信息表 id->info
+      infos:{}
+    }
+  },
+  
+  getters:{
+    //获取历史列表（idxs)
+    historyKeys(state){
+      return _.keys(state.history.infos)
+    },
   },
   mutations: {
     increment(state) {

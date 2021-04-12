@@ -70,7 +70,7 @@
               </template>
             </el-table-column>
 
-            <el-table-column label="操作" align="right" header-align="center">
+            <el-table-column label="操作" align="right" header-align="center" fixed="right">
               <template slot-scope="scope">
                 <el-button
                   @click="select(scope.row.id)"
@@ -142,9 +142,17 @@
       <el-button type="warning" @click="show_player">显示播放器</el-button>
       <el-divider></el-divider>
       <!-- 录音时操作 -->
-      <el-button style="margin-right:2rem" type="primary" v-if="nowState=='recording'">添加标记点(空格键添加)</el-button>
+      <el-button style="margin-right:2rem" type="primary" v-if="nowState=='recording'" @click="addPoint">添加标记点(空格键添加)</el-button>
       <el-button type="primary" v-if="nowState=='recording'||nowState=='paused'">添加笔记</el-button>
       <!-- 笔记编辑部分 -->
+      <!-- 笔记显示部分 -->
+      <div>
+        <ul>
+          <el-button @click="showRecordingPoint(idx)" type="text" v-for="(item,idx) in recordingInfo.points" :key="item.time">
+            {{item.time}}
+          </el-button>
+        </ul>
+      </div>
     </div>
   </div>
 </template>
@@ -206,9 +214,14 @@ export default {
       loading: false,
       //player
       player: null,
-      //
+      //正在录制的信息 下面的startTime等以后也要转移到这个对象中
+      //points:[{type:'pause'|’point'}]
+      recordingInfo:{
+        points:[]
+      },
       startTime: new Date(),
       endTime: new Date(),
+
       //当前录音信息
       // nowRecordInfo: {
       //   id:"",
@@ -220,7 +233,9 @@ export default {
       //    * @type {Date[]}
       //    */
       //   timeSpanList: [],
+      //   points:[]
       // },
+      //当前的mergeBlob对应的Info，在mergeBlob阶段合成
       nowRecordInfo: null,
       //blob array
       blobs: [],
@@ -301,6 +316,20 @@ export default {
       // });
     },
     //tools
+    /**
+     * @param {string} type
+     * @param {string} note
+     */
+    createPoint(type,note){
+      let position=this.blobs.length;
+      let nowTime=new Date();
+      return {
+        type,
+        note,
+        position,
+        time:nowTime
+      }
+    },
     formatDate(d) {
       return dayjs(d).format("YYYY-MM-DD HH:mm:ss");
     },
@@ -358,6 +387,16 @@ export default {
       } else {
         await this.$alert("错误");
       }
+    },
+    //标记相关
+    addPoint(){
+      let point=this.createPoint('point',null);
+      //加入正在录制
+      this.recordingInfo.points.push(point);
+    },
+    showRecordingPoint(idx){
+      let item=this.recordingInfo.points[idx];
+      this.$message(JSON.stringify(item))
     },
     //
     play() {
@@ -452,6 +491,7 @@ export default {
 
       this.startTime = riinfo["startTime"];
       this.endTime = riinfo["endTime"];
+      this.recordingInfo.points=riinfo["points"];
       this.recorder.start(1000);
       //state
       this.stateSwitch("recording");
@@ -462,6 +502,7 @@ export default {
       await store.set(recordingInfo, {
         startTime: this.startTime,
         endTime: this.endTime,
+        ...this.recordingInfo
       });
     },
     /**
@@ -608,6 +649,7 @@ export default {
         //暂时不赋值
         timeSpanList: [],
         length: blobs.length,
+        points:this.recordingInfo.points
       };
     },
     clearNow() {
@@ -731,6 +773,12 @@ export default {
   padding: 1rem 3rem;
   min-width: 300px;
 }
+
+/* @media screen and (max-width:980px){
+  .player_list{
+    min-width: 100%;
+  }
+} */
 .player_list {
   flex: 3;
   min-width: 980px;
