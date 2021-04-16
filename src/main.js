@@ -22,7 +22,7 @@ function getHistoryItem(state,){
 
 }
 
-import getStore from "./store"
+import getStore from "./stores/recorder"
 
 const store=getStore();
 import VueRouter from "vue-router"
