@@ -23,6 +23,7 @@
       </el-card>
     </el-card>
     <div style="margin-top: 2rem"></div>
+    <router-link to="/new">新录音机</router-link>
     <div>
       <router-view></router-view>
     </div>

@@ -22,41 +22,19 @@ function getHistoryItem(state,){
 
 }
 
-const store = new Vuex.Store({
-  state: {
-    countA: 0,
-    //当前录音信息
-    recording:{
-      info:{},
-      blobs:[]
-    },
-    history:{
-      //信息表 id->info
-      infos:{}
-    }
-  },
-  
-  getters:{
-    //获取历史列表（idxs)
-    historyKeys(state){
-      return _.keys(state.history.infos)
-    },
-  },
-  mutations: {
-    increment(state) {
-      state.countA++
-    }
-  }
-})
+import getStore from "./store"
 
+const store=getStore();
 import VueRouter from "vue-router"
 import Recorder from "./components/HelloWorld"
+import NewRecorder from "./components/NewRecorder"
 //router
 Vue.use(VueRouter)
 import Center from "./components/Center"
 const routes = [
   { path: '/', component: Recorder },
-  {path:"/center",component:Center}
+  {path:"/center",component:Center},
+  {path:"/new",component:NewRecorder}
 ]
 
 // 3. 创建 router 实例，然后传 `routes` 配置
