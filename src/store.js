@@ -6,6 +6,6 @@ export default ()=>new Store({
     modules:{
         recorder:{namespaced:true,...recorder()},
         history:{namespaced:true,...history()},
-        player:{namespaced:true,...player()},
+        // player:{namespaced:true,...player()},
     }
 })

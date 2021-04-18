@@ -57,7 +57,8 @@ async function clearCache() {
 export default ()=>new Store({
     state:{
         //与上面的nowLength同步 只在commit时更改
-        nowCacheLength:0
+        nowCacheLength:0,
+        
     },
     mutations:{
         itemAdded(state){

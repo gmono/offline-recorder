@@ -71,7 +71,7 @@ import { error, range } from "ts-pystyle"
 import { uniqueId } from "lodash";
 import dayjs from "dayjs";
 import { createStore, del, entries, get, keys, set } from "idb-keyval";
-import { Subject } from "rxjs";
+import { onErrorResumeNext, Subject } from "rxjs";
 
 
 //录音机部分
@@ -110,7 +110,8 @@ const recorder = new Recorder();
  */
 let nowSub = null;
 
-export default () => new Store({
+export default () => ({
+    // namespace:true,
     state: {
         mergedBlob: null,
         blobs: [],
@@ -221,7 +222,7 @@ export default () => new Store({
             if (state.recordingInfo == null) return null;
             return state.blobs.length;
         },
-        historyBlobs(state){
+        historyBlobs(state) {
 
         }
     },
@@ -231,14 +232,16 @@ export default () => new Store({
         async newRecorder() {
 
         },
-        async startNew() {
+        async startNew(context) {
+            // console.log(state)
             await recorder.ensureinit();
             //开始一个新的 如果有旧的 就保存并清除
-            if (this.state.state == "normal") {
-                this.commit("switchState", "start");
+            // console.log(this)
+            if (context.state.state == "normal") {
+                context.commit("switchState", "start");
                 //启动录音机 开始监听 pushFrame
                 nowSub = recorder.onDataAvailable.subscribe(d => {
-                    this.commit("pushBlob", d);
+                    context.commit("pushBlob", d);
                 });
                 //开始pushframe
                 recorder.recorder.start(1000);
@@ -248,9 +251,19 @@ export default () => new Store({
                 error("还没恢复到未开始状态")
             }
         },
-        async pause() {
+        async resume(context) {
+            await recorder.ensureinit();
+            if (context.state.state != "paused") {
+                error("并非在暂停状态，调用resume");
+                return;
+            }
+            context.commit("switchState", "start")
+            recorder.recorder.resume();
+        },
+        async pause(context) {
+
             //停止录音并切换到pause
-            this.commit("switchState", "pause");
+            context.commit("switchState", "pause");
             await recorder.ensureinit();
             recorder.recorder.pause();
         },
@@ -259,28 +272,33 @@ export default () => new Store({
          * 停止并保存录音 
          * @param {string} name
          */
-        async saveRecording(state, name) {
+        async saveRecording(context, name) {
             //可设置包保存的名字 不设置采取默认
             //切换状态设置名字并保存
-            this.commit("switchState", "stop");
+            context.commit("switchState", "stop");
             await recorder.ensureinit();
             recorder.recorder.stop();
             nowSub.unsubscribe();
+            nowSub = null;
             //
             //执行保存录音 清空临时缓存 还原状态到normal 三步操作
-            this.commit("setRecordingName");
-            await this.dispatch("storeToDisk");
+            context.commit("setRecordingName");
+            await context.dispatch("storeToDisk");
             //清空临时缓存
             //恢复
-            this.commit("switchState", "recover")
+            context.commit("switchState", "recover")
         },
-
         //下面是工具函数
-        async storeToDisk() {
+        async storeToDisk(context) {
             //保存录音到磁盘 如果没有合并就自动合并
-            if (this.state.mergedBlob == null)
-                this.commit("mergeBlob");
-            await storeItem(this.state.recordingInfo, this.state.mergedBlob);
+            if (context.state.mergedBlob == null)
+                context.commit("mergeBlob");
+            //保证已经初始化
+            await context.dispatch("history/ensureInitHistory",null,{root:true});
+            await context.dispatch("history/pushHistory",  {
+                info: context.state.recordingInfo,
+                blob: context.state.mergedBlob
+            },{root:true});
         },
         //
 
