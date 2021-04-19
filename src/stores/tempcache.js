@@ -69,6 +69,9 @@ export default ()=>new Store({
         async pushItem(state,blob){
             await pushToCache(blob);
             this.commit("itemAdded")
+        },
+        async clearCache(context){
+            
         }
     }
 })

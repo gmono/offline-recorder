@@ -16,7 +16,7 @@ async function itemNameList() {
  * @returns {{[idx:string]:ReturnType<typeof newRecordingInfo>}}
  */
 async function itemInfos() {
-    return await (await entries(itemInfoStore)).reduce((prev, curr) => prev[curr[0]] = curr[1], {})
+    return await (await entries(itemInfoStore)).reduce((prev, curr) => (prev[curr[0]] = curr[1],prev), {})
 }
 
 /**
@@ -72,7 +72,10 @@ export default () => ({
                 error("错误，还没初始化");
             }
             //只提交info 客户端获取blob应该通过导出的工具函数获取
-            state.historyInfos[info.id] = info;
+            // state.historyInfos[info.id] = info;
+            //由于不是用proxy实现 这里在object上添加新的key是不会被监听到的
+            state.historyInfos={...state.historyInfos,[info.id]:info}
+            alert(info)
         },
         initHistoryInfo(state, initinfos) {
             // if (state.isInited) console.warn("重复提交初始化更改")

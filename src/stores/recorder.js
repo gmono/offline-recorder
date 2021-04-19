@@ -1,7 +1,8 @@
 import { Store } from "vuex";
+import {v4} from "uuid"
 function newRecordingInfo() {
     return {
-        id: uniqueId("recording"),
+        id: `record_${v4()}`,
         //name是后设置的根据情况可生成
         name: `record_${dayjs().format("YYYY-MM-DD HH:mm:ss")}`,
         startTime: new Date(),
@@ -282,9 +283,11 @@ export default () => ({
             nowSub = null;
             //
             //执行保存录音 清空临时缓存 还原状态到normal 三步操作
-            context.commit("setRecordingName");
+            if(name!=null)
+                context.commit("setRecordingName",name);
             await context.dispatch("storeToDisk");
             //清空临时缓存
+            context.dispatch("tempcache/clearCache",null,{root:true})
             //恢复
             context.commit("switchState", "recover")
         },
@@ -301,6 +304,11 @@ export default () => ({
             },{root:true});
         },
         //
+        async pushFrame(context,blob){
+            //使用缓存
+            context.commit("pushBlob",blob);
+            context.dispatch("tempcache/pushItem",blob,{root:true})
+        }
 
     }
 })
