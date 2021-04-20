@@ -22,7 +22,9 @@
           <div style="margin-top: 2rem"></div>
 
           <div>
-            <el-button type="danger" @click="download">下载</el-button>
+            <el-button type="success" @click="download">下载</el-button>
+            <el-button type="danger" @click="downloadAll">下载全部</el-button>
+            <el-button type="danger" @click="downloadAll_packed">打包下载全部</el-button>
             <el-button type="primary" @click="clear">清除历史记录</el-button>
           </div>
 
@@ -70,7 +72,12 @@
               </template>
             </el-table-column>
 
-            <el-table-column label="操作" align="right" header-align="center" fixed="right">
+            <el-table-column
+              label="操作"
+              align="right"
+              header-align="center"
+              fixed="right"
+            >
               <template slot-scope="scope">
                 <el-button
                   @click="select(scope.row.id)"
@@ -142,14 +149,29 @@
       <el-button type="warning" @click="show_player">显示播放器</el-button>
       <el-divider></el-divider>
       <!-- 录音时操作 -->
-      <el-button style="margin-right:2rem" type="primary" v-if="nowState=='recording'" @click="addPoint">添加标记点(空格键添加)</el-button>
-      <el-button type="primary" v-if="nowState=='recording'||nowState=='paused'">添加笔记</el-button>
+      <el-button
+        style="margin-right: 2rem"
+        type="primary"
+        v-if="nowState == 'recording'"
+        @click="addPoint"
+        >添加标记点(空格键添加)</el-button
+      >
+      <el-button
+        type="primary"
+        v-if="nowState == 'recording' || nowState == 'paused'"
+        >添加笔记</el-button
+      >
       <!-- 笔记编辑部分 -->
       <!-- 笔记显示部分 -->
       <div>
         <ul>
-          <el-button @click="showRecordingPoint(idx)" type="text" v-for="(item,idx) in recordingInfo.points" :key="item.time">
-            {{item.time}}
+          <el-button
+            @click="showRecordingPoint(idx)"
+            type="text"
+            v-for="(item, idx) in recordingInfo.points"
+            :key="item.time"
+          >
+            {{ item.time }}
           </el-button>
         </ul>
       </div>
@@ -169,10 +191,13 @@
 
 // import WFPlayer from "wfplayer"
 import { get, set, del, createStore, clear, entries } from "idb-keyval";
-import { delay } from "ts-pystyle";
+import { delay, json } from "ts-pystyle";
 import filesize from "filesize";
 import store from "store2";
+import jszip from "jszip";
 import * as dayjs from "dayjs";
+import * as _ from "lodash";
+import downloadjs from "js-file-downloader";
 const historyKey = "historyBlobs";
 const infoMap = "historyBlobsInfoMap";
 const tempcache = "tempcache";
@@ -216,8 +241,8 @@ export default {
       player: null,
       //正在录制的信息 下面的startTime等以后也要转移到这个对象中
       //points:[{type:'pause'|’point'}]
-      recordingInfo:{
-        points:[]
+      recordingInfo: {
+        points: [],
       },
       startTime: new Date(),
       endTime: new Date(),
@@ -269,6 +294,9 @@ export default {
         .subtract(8, "hours")
         .format("HH:mm:ss");
     },
+    // historyIdxs(){
+    //   return _.keys(this.historyInfoMap)
+    // }
     // playList() {
     //   return this.historyBlobsIdx.map((item) => {
     //     return {
@@ -320,15 +348,15 @@ export default {
      * @param {string} type
      * @param {string} note
      */
-    createPoint(type,note){
-      let position=this.blobs.length;
-      let nowTime=new Date();
+    createPoint(type, note) {
+      let position = this.blobs.length;
+      let nowTime = new Date();
       return {
         type,
         note,
         position,
-        time:nowTime
-      }
+        time: nowTime,
+      };
     },
     formatDate(d) {
       return dayjs(d).format("YYYY-MM-DD HH:mm:ss");
@@ -366,16 +394,17 @@ export default {
       let info = this.historyInfoMap[id];
 
       this.$message.info("已开始下载：" + info.name);
-      this.downloadUrl(
-        info.name,
-        URL.createObjectURL(await this.readHistoryItem(id))
-      );
+      let bloburl = URL.createObjectURL(await this.readHistoryItem(id));
+      let infourl = URL.createObjectURL(new Blob([JSON.stringify(info)]));
+
+      await this.downloadUrl(info.name + ".webm", bloburl);
+      URL.revokeObjectURL(bloburl);
+
       //下载信息文件
-      this.downloadUrl(
-        info.name + ".json",
-        URL.createObjectURL(new Blob([JSON.stringify(info)]))
-      );
+      await this.downloadUrl(info.name + ".json", infourl);
+      URL.revokeObjectURL(info);
     },
+
     async playlist_rename(id) {
       //重命名
       let res = await this.$prompt("请输入名称:", "命名录音", {
@@ -389,14 +418,14 @@ export default {
       }
     },
     //标记相关
-    addPoint(){
-      let point=this.createPoint('point',null);
+    addPoint() {
+      let point = this.createPoint("point", null);
       //加入正在录制
       this.recordingInfo.points.push(point);
     },
-    showRecordingPoint(idx){
-      let item=this.recordingInfo.points[idx];
-      this.$message(JSON.stringify(item))
+    showRecordingPoint(idx) {
+      let item = this.recordingInfo.points[idx];
+      this.$message(JSON.stringify(item));
     },
     //
     play() {
@@ -491,7 +520,7 @@ export default {
 
       this.startTime = riinfo["startTime"];
       this.endTime = riinfo["endTime"];
-      this.recordingInfo.points=riinfo["points"];
+      this.recordingInfo.points = riinfo["points"];
       this.recorder.start(1000);
       //state
       this.stateSwitch("recording");
@@ -502,7 +531,7 @@ export default {
       await store.set(recordingInfo, {
         startTime: this.startTime,
         endTime: this.endTime,
-        ...this.recordingInfo
+        ...this.recordingInfo,
       });
     },
     /**
@@ -603,15 +632,57 @@ export default {
         await this.$alert("错误");
       }
     },
-    download() {
+    async download() {
       if (this.src != "") {
         this.$message.info("已开始下载：" + this.nowRecordInfo.name);
-        this.downloadUrl(this.nowRecordInfo.name, this.src);
-        this.downloadUrl(
-          this.nowRecordInfo.name + ".json",
-          URL.createObjectURL(new Blob([JSON.stringify(this.nowRecordInfo)]))
+        //这里不释放
+        this.downloadUrl(this.nowRecordInfo.name + ".webm", this.src);
+        let infourl = URL.createObjectURL(
+          new Blob([JSON.stringify(this.nowRecordInfo)])
         );
+
+        await this.downloadUrl(this.nowRecordInfo.name + ".json", infourl);
+        URL.revokeObjectURL(infourl);
       }
+    },
+    async downloadAll() {
+      let msg = this.$message.warning({
+        message: "正在顺序下载所有内容",
+        duration: 0,
+        showClose: true,
+      });
+      for (let idx of this.historyBlobsIdx) {
+        await this.playlist_download(idx);
+      }
+      msg.close();
+    },
+    async downloadAll_packed() {
+      //下载全部列表中的文件 理论上只需要不断调用playlist_download就可以
+      //
+      let packmsg = this.$message.warning({
+        message: "正在打包......",
+        duration: 0,
+        showClose: true,
+      });
+
+      let zip = new jszip();
+      let idxs = this.historyBlobsIdx;
+      for (let idx of idxs) {
+        //每个item创建于一个文件夹 以id命名 因为不重复
+        let folder = zip.folder(idx);
+        let info = this.historyInfoMap[idx];
+        let blob = await this.readHistoryItem(idx);
+        //创建文件
+        folder.file(`${id}.json`, json(info));
+        folder.file(`${id}.webm`, blob);
+        //生成
+      }
+      let content = await zip.generateAsync({ type: "blob" });
+      let url = URL.createObjectURL(content);
+      packmsg.close();
+      this.$message.warning("已经开始下载打包文件");
+      await this.downloadUrl(`packageRecords.zip`, url);
+      URL.revokeObjectURL(url);
     },
     async removeNow() {
       await this.playlist_del(this.nowRecordInfo.id);
@@ -623,11 +694,18 @@ export default {
       if (res == "confirm") this.clearHistroy();
     },
     //tools
-    downloadUrl(name, url) {
-      let a = document.createElement("a");
-      a.download = name;
-      a.href = url;
-      a.click();
+    async downloadUrl(name, url) {
+      // let a = document.createElement("a");
+      // a.download = name;
+      // a.href = url;
+      // a.click();
+      let down = new downloadjs({
+        url: url,
+        filename: name,
+      });
+      //等待下载完 thenable这是
+      await down;
+      // if(autorevoke) URL.revokeObjectURL(url);
     },
     //merge blobs and set src
     /**
@@ -649,7 +727,7 @@ export default {
         //暂时不赋值
         timeSpanList: [],
         length: blobs.length,
-        points:this.recordingInfo.points
+        points: this.recordingInfo.points,
       };
     },
     clearNow() {

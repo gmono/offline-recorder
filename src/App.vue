@@ -1,5 +1,8 @@
 <template>
   <div id="app">
+    <g-widget>
+      <h1 style="background:red" :data-draggable="true">helloworld</h1>
+    </g-widget>
     <h1>离线录音机</h1>
     <el-card shadow="never">
       一款直接在浏览器中运行的录音机，数据离线实时保存（尚未适配手机）
@@ -31,8 +34,10 @@
 </template>
 
 <script>
+import GWidget from './libcomponents/GWidget.vue';
 
 export default {
+  components: { GWidget },
   name: "App",
 };
 </script>
