@@ -120,23 +120,51 @@
       </div>
     </el-dialog>
 
+    <!-- 笔记输入部分 -->
     <el-dialog
       class="notedialog"
+      title="输入内容"
+      :visible.sync="noteContentVisible"
+      width="70%"
+      :fullscreen="$mq == 'md'"
+    >
+      <mavon-editor
+        style="width: 100%"
+        :style="{ height: '60vh' }"
+        v-model="nowEditingNote"
+      ></mavon-editor>
+    </el-dialog>
+    <el-dialog
+      :show-close="false"
       title="输入笔记"
       :visible.sync="isNoteEditing"
       width="70%"
       :fullscreen="$mq == 'md'"
+      :before-close="onnote_cancel"
     >
-      <!-- 输入笔记 -->
-      <mavon-editor
-        :style="{ height: '60vh' }"
-        v-model="nowEditingNote"
-      ></mavon-editor>
+      <el-form>
+        <el-form-item label="标题">
+          <el-input autofocus></el-input>
+        </el-form-item>
+        <el-form-item label="简要描述">
+          <el-input></el-input>
+        </el-form-item>
+        <el-form-item style="display: flex; flex-direction: row-reverse">
+          <!-- 输入笔记 -->
+          <span style="margin-right: 3rem; font-size: 16px; font-weight: bold"
+            >已输入:{{ nowEditingNote.length }}字</span
+          >
+          <el-button type="primary" @click="note_inputcontent"
+            >输入内容</el-button
+          >
+        </el-form-item>
+      </el-form>
+
       <el-row
-        style="margin-top: 1.5rem; display: flex; flex-direction: row-reverse"
+        style="margin-top: 1.5rem; display: flex; justify-content: space-around"
       >
-        <el-button type="success" @click="note_confirm">确认</el-button>
         <el-button @click="note_cancel">取消</el-button>
+        <el-button type="success" @click="note_confirm">确认</el-button>
       </el-row>
     </el-dialog>
     <div class="recorder" v-loading="stopping || loading">
@@ -259,7 +287,15 @@ export default {
   },
   data() {
     return {
+      //正在编辑的笔记
+      nowEditNote:{
+        content:"",
+        title:"",
+        desc:""
+      },
+      noteContentVisible: false,
       isNoteEditing: false,
+      //准备取消这个字段
       nowEditingNote: "",
       loading: false,
       //player
@@ -350,6 +386,9 @@ export default {
     },
   },
   methods: {
+    note_inputcontent() {
+      this.noteContentVisible = true;
+    },
     /**
      * 代理以在模板中用
      */
@@ -456,8 +495,17 @@ export default {
       this.addPoint(this.nowEditingNote);
       this.isNoteEditing = false;
     },
+    async onnote_cancel(done) {
+      let res = await this.$confirm("不保存笔记？");
+      if (res == "confirm") {
+        done();
+      }
+    },
     note_cancel() {
-      this.isNoteEditing = false;
+      //询问
+      this.onnote_cancel(() => {
+        this.isNoteEditing = false;
+      });
     },
     showRecordingPoint(idx) {
       let item = this.recordingInfo.points[idx];
