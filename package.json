@@ -20,6 +20,7 @@
     "js-file-downloader": "^1.1.19",
     "jszip": "^3.6.0",
     "lodash": "^4.17.21",
+    "lzma": "^2.3.2",
     "mavon-editor": "^2.9.1",
     "register-service-worker": "^1.7.1",
     "rxjs": "^6.6.7",

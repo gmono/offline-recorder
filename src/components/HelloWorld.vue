@@ -41,7 +41,6 @@
             max-height="600"
             border
             :data="playList"
-            default-sort="startTime"
           >
             <el-table-column
               label="名称"
@@ -131,7 +130,7 @@
       <mavon-editor
         style="width: 100%"
         :style="{ height: '60vh' }"
-        v-model="nowEditingNote"
+        v-model="nowEditNote.content"
       ></mavon-editor>
     </el-dialog>
     <el-dialog
@@ -144,15 +143,15 @@
     >
       <el-form>
         <el-form-item label="标题">
-          <el-input autofocus></el-input>
+          <el-input autofocus v-model="nowEditNote.title"></el-input>
         </el-form-item>
         <el-form-item label="简要描述">
-          <el-input></el-input>
+          <el-input v-model="nowEditNote.desc"></el-input>
         </el-form-item>
         <el-form-item style="display: flex; flex-direction: row-reverse">
           <!-- 输入笔记 -->
           <span style="margin-right: 3rem; font-size: 16px; font-weight: bold"
-            >已输入:{{ nowEditingNote.length }}字</span
+            >已输入:{{ nowEditNote.content.length }}字</span
           >
           <el-button type="primary" @click="note_inputcontent"
             >输入内容</el-button
@@ -212,7 +211,6 @@
         >添加笔记</el-button
       >
       <!-- 笔记编辑部分 -->
-      <el-input rows="10" v-model="nowEditingNote"></el-input>
       <!-- 笔记显示部分 -->
       <div>
         <ul>
@@ -296,7 +294,6 @@ export default {
       noteContentVisible: false,
       isNoteEditing: false,
       //准备取消这个字段
-      nowEditingNote: "",
       loading: false,
       //player
       player: null,
@@ -483,6 +480,7 @@ export default {
     },
     //标记相关
     addPoint(note = null) {
+      //note的数据格式不定 看情况
       let point = this.createPoint("point", note);
       //加入正在录制
       this.recordingInfo.points.push(point);
@@ -492,7 +490,7 @@ export default {
       this.isNoteEditing = true;
     },
     note_confirm() {
-      this.addPoint(this.nowEditingNote);
+      this.addPoint(this.nowEditNote);
       this.isNoteEditing = false;
     },
     async onnote_cancel(done) {
@@ -748,7 +746,7 @@ export default {
         duration: 0,
         showClose: true,
       });
-
+      debugger;
       let zip = new jszip();
       let idxs = this.historyBlobsIdx;
       for (let idx of idxs) {
@@ -757,16 +755,25 @@ export default {
         let info = this.historyInfoMap[idx];
         let blob = await this.readHistoryItem(idx);
         //创建文件
-        folder.file(`${id}.json`, json(info));
-        folder.file(`${id}.webm`, blob);
+        folder.file(`${idx}.json`, json(info));
+        folder.file(`${idx}.webm`, blob);
         //生成
-        this.$message.success({
-          message: "文件加入：" + id,
-          duration: 1000,
-          showClose: false,
-        });
+        // this.$message.success({
+        //   message: "文件加入：" + idx,
+        //   duration: 1000,
+        //   showClose: false,
+        // });
+        packmsg.message=`加入记录:${idx}`;
       }
-      let content = await zip.generateAsync({ type: "blob" });
+      packmsg.message="记录加入完成，正在进行压缩......"
+      let progmsg=this.$message.info({
+        message:"进度:0",
+        duration:0,
+        showClose:false
+      });
+      let content = await zip.generateAsync({ type: "blob"},(meta)=>{
+        progmsg.message=`进度:${meta.percent} \n 已压缩:${meta.currentFile}`
+      });
       let url = URL.createObjectURL(content);
       packmsg.close();
       this.$message.warning("已经开始下载打包文件");
