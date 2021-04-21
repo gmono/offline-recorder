@@ -24,7 +24,9 @@
           <div>
             <el-button type="success" @click="download">下载</el-button>
             <el-button type="danger" @click="downloadAll">下载全部</el-button>
-            <el-button type="danger" @click="downloadAll_packed">打包下载全部</el-button>
+            <el-button type="danger" @click="downloadAll_packed"
+              >打包下载全部</el-button
+            >
             <el-button type="primary" @click="clear">清除历史记录</el-button>
           </div>
 
@@ -118,6 +120,25 @@
       </div>
     </el-dialog>
 
+    <el-dialog
+      class="notedialog"
+      title="输入笔记"
+      :visible.sync="isNoteEditing"
+      width="70%"
+      :fullscreen="$mq == 'md'"
+    >
+      <!-- 输入笔记 -->
+      <mavon-editor
+        :style="{ height: '60vh' }"
+        v-model="nowEditingNote"
+      ></mavon-editor>
+      <el-row
+        style="margin-top: 1.5rem; display: flex; flex-direction: row-reverse"
+      >
+        <el-button type="success" @click="note_confirm">确认</el-button>
+        <el-button @click="note_cancel">取消</el-button>
+      </el-row>
+    </el-dialog>
     <div class="recorder" v-loading="stopping || loading">
       <h2>当前录制:{{ recordTime }}</h2>
       <div></div>
@@ -159,9 +180,11 @@
       <el-button
         type="primary"
         v-if="nowState == 'recording' || nowState == 'paused'"
+        @click="addNote"
         >添加笔记</el-button
       >
       <!-- 笔记编辑部分 -->
+      <el-input rows="10" v-model="nowEditingNote"></el-input>
       <!-- 笔记显示部分 -->
       <div>
         <ul>
@@ -236,6 +259,8 @@ export default {
   },
   data() {
     return {
+      isNoteEditing: false,
+      nowEditingNote: "",
       loading: false,
       //player
       player: null,
@@ -345,7 +370,7 @@ export default {
     },
     //tools
     /**
-     * @param {string} type
+     * @param {'pause'|'point'} type
      * @param {string} note
      */
     createPoint(type, note) {
@@ -418,10 +443,21 @@ export default {
       }
     },
     //标记相关
-    addPoint() {
-      let point = this.createPoint("point", null);
+    addPoint(note = null) {
+      let point = this.createPoint("point", note);
       //加入正在录制
       this.recordingInfo.points.push(point);
+    },
+    addNote() {
+      //clear 然后 显示对话框
+      this.isNoteEditing = true;
+    },
+    note_confirm() {
+      this.addPoint(this.nowEditingNote);
+      this.isNoteEditing = false;
+    },
+    note_cancel() {
+      this.isNoteEditing = false;
     },
     showRecordingPoint(idx) {
       let item = this.recordingInfo.points[idx];
@@ -676,6 +712,11 @@ export default {
         folder.file(`${id}.json`, json(info));
         folder.file(`${id}.webm`, blob);
         //生成
+        this.$message.success({
+          message: "文件加入：" + id,
+          duration: 1000,
+          showClose: false,
+        });
       }
       let content = await zip.generateAsync({ type: "blob" });
       let url = URL.createObjectURL(content);
@@ -860,5 +901,11 @@ export default {
 .player_list {
   flex: 3;
   min-width: 980px;
+}
+
+@media screen and (min-width: 950px) {
+  .notedialog .el-dialog {
+    margin-top: 10vh !important;
+  }
 }
 </style>

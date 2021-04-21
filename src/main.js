@@ -49,6 +49,24 @@ Vue.use(VueLocalStorage, {
   bind: true //created computed members from your variable declarations
 })
 
+
+import mavonEditor from 'mavon-editor'
+import 'mavon-editor/dist/css/index.css'
+// use
+Vue.use(mavonEditor)
+
+
+import VueMq from 'vue-mq'
+
+Vue.use(VueMq, {
+  breakpoints: { // default breakpoints - customize this
+    sm: 450,
+    md: 950,
+    lg: Infinity,
+  },
+  defaultBreakpoint: 'sm' // customize this for SSR
+})
+
 new Vue({
   render: h => h(App),
   store,
