@@ -23,10 +23,17 @@
 
           <div>
             <el-button type="success" @click="download">下载</el-button>
-            <el-button type="danger" @click="downloadAll">下载全部</el-button>
-            <el-button type="danger" @click="downloadAll_packed"
-              >打包下载全部</el-button
-            >
+
+
+            <el-dropdown style="margin:0 2rem">
+              <el-button type="success" @click="downloadAll">
+                下载全部（悬浮查看更多）<i class="el-icon-arrow-down el-icon--right"></i>
+              </el-button>
+              <el-dropdown-menu slot="dropdown">
+                <el-dropdown-item @click="downloadAll_packed">打包下载全部（zip）</el-dropdown-item>
+                <el-dropdown-item @click="downloadAll_packed_private">打包下载全部（专用格式）</el-dropdown-item>
+              </el-dropdown-menu>
+            </el-dropdown>
             <el-button type="primary" @click="clear">清除历史记录</el-button>
           </div>
 
@@ -37,11 +44,7 @@
           </div> -->
         </div>
         <div class="player_list">
-          <el-table
-            max-height="600"
-            border
-            :data="playList"
-          >
+          <el-table max-height="600" border :data="playList">
             <el-table-column
               label="名称"
               prop="name"
@@ -286,10 +289,10 @@ export default {
   data() {
     return {
       //正在编辑的笔记
-      nowEditNote:{
-        content:"",
-        title:"",
-        desc:""
+      nowEditNote: {
+        content: "",
+        title: "",
+        desc: "",
       },
       noteContentVisible: false,
       isNoteEditing: false,
@@ -738,9 +741,17 @@ export default {
       }
       msg.close();
     },
+    /**
+     * zip压缩并下载 注意，文件总大小太大可能会因为内存溢出导致失败，压缩过程缓慢
+     * 如无特殊需求可直接使用专用格式（后续会添加在线的解压缩程序和浏览器）
+     */
     async downloadAll_packed() {
       //下载全部列表中的文件 理论上只需要不断调用playlist_download就可以
       //
+      let res=await this.$confirm("zip压缩下载有总大小限制，可能导致失败与卡顿，确定使用此方式下载吗（可选择专用格式）？")
+      if(res!="confirm"){
+        return;
+      }
       let packmsg = this.$message.warning({
         message: "正在打包......",
         duration: 0,
@@ -763,22 +774,33 @@ export default {
         //   duration: 1000,
         //   showClose: false,
         // });
-        packmsg.message=`加入记录:${idx}`;
+        packmsg.message = `加入记录:${idx}`;
       }
-      packmsg.message="记录加入完成，正在进行压缩......"
-      let progmsg=this.$message.info({
-        message:"进度:0",
-        duration:0,
-        showClose:false
+      packmsg.message = "记录加入完成，正在进行压缩......";
+      let progmsg = this.$message.info({
+        message: "进度:0",
+        duration: 0,
+        showClose: false,
       });
-      let content = await zip.generateAsync({ type: "blob"},(meta)=>{
-        progmsg.message=`进度:${meta.percent} \n 已压缩:${meta.currentFile}`
-      });
+      let content = await zip.generateAsync(
+        { type: "blob", compression: "STORE" },
+        (meta) => {
+          progmsg.message = `进度:${meta.percent} \n 已压缩:${meta.currentFile}`;
+        }
+      );
       let url = URL.createObjectURL(content);
       packmsg.close();
       this.$message.warning("已经开始下载打包文件");
       await this.downloadUrl(`packageRecords.zip`, url);
       URL.revokeObjectURL(url);
+    },
+    /**
+     * 打包下载全部，使用专用格式
+     * 专用格式是直接的二进制格式，可用于下载大文件，无压缩，存储速度快
+     * 且是通过非内存合并方法，文件大小理论上没有限制
+     */
+    downloadAll_packed_private(){
+
     },
     async removeNow() {
       await this.playlist_del(this.nowRecordInfo.id);
