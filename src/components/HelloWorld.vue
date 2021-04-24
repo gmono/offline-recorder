@@ -1,6 +1,6 @@
 <template>
   <div class="hello">
-    <router-link to="/center">测试</router-link>
+    <!-- <router-link to="/center">测试</router-link> -->
     <el-dialog :visible.sync="showPlayer" fullscreen>
       <div class="player">
         <div class="player_info">
@@ -26,6 +26,9 @@
               style="outline: none"
             ></audio>
             <!-- 视频播放器 -->
+            <video v-if="false" :src="src" controls ref="videoPlayer" style="outline:none">
+              
+            </video>
           </div>
           <div style="margin-top: 2rem"></div>
 
@@ -42,9 +45,9 @@
                 <el-dropdown-item @click="downloadAll_packed"
                   >打包下载全部（zip）</el-dropdown-item
                 >
-                <el-dropdown-item @click="downloadAll_packed_private"
+                <!-- <el-dropdown-item @click="downloadAll_packed_private"
                   >打包下载全部（专用格式）</el-dropdown-item
-                >
+                > -->
               </el-dropdown-menu>
             </el-dropdown>
             <el-button type="primary" @click="clear">清除历史记录</el-button>
@@ -193,12 +196,12 @@
       </div>
       <h2>当前录制:{{ recordTime }}</h2>
       <div></div>
-      <el-button
+      <!-- <el-button
         type="primary"
         v-if="recordType == 'audio'"
         @click="recordVideo"
         >视频录制
-      </el-button>
+      </el-button> -->
       <el-button
         type="primary"
         v-if="recordType == 'video'"
