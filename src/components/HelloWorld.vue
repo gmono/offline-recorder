@@ -174,7 +174,12 @@
         <el-button type="success" @click="note_confirm">确认</el-button>
       </el-row>
     </el-dialog>
+    <!-- 操控面板 -->
     <div class="recorder" v-loading="stopping || loading">
+      <div>
+        回放
+        <video  controls ref="record_video_player"></video>
+      </div>
       <h2>当前录制:{{ recordTime }}</h2>
       <div></div>
       <el-button type="success" @click="recordVideo">视频录制 </el-button>
@@ -306,6 +311,8 @@ export default {
   },
   data() {
     return {
+      recordType:"audio",
+      videoStreamUrl:null,
       //正在编辑的笔记
       nowEditNote: {
         content: "",
@@ -406,15 +413,20 @@ export default {
   methods: {
     recordAudio() {
       this.initRecorder();
+      this.recordType="audio";
     },
     recordVideo() {
       this.initVideoRecorder()
+      this.recordType="video";
     },
     async initVideoRecorder() {
       let stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
         video: true,
       });
+      let videoele=this.$refs["record_video_player"];
+      videoele.srcObject=stream;
+      videoele.play();
       let recorder = new MediaRecorder(stream, {
         bitsPerSecond: 128000,
         audioBitrateMode: "variable",
@@ -422,6 +434,8 @@ export default {
       });
       recorder.ondataavailable = (d) => this.dataavailable(d);
       this.recorder = recorder;
+      //建立回放
+      // this.videoStreamUrl=URL.createObjectURL(source);
     },
     async initRecorder() {
       let stream = await navigator.mediaDevices.getUserMedia({
