@@ -177,8 +177,7 @@
     <!-- 操控面板 -->
     <div class="recorder" v-loading="stopping || loading">
       <div>
-        回放
-        <video  controls ref="record_video_player"></video>
+        <video v-if="recordType=='video'" controls ref="record_video_player"></video>
       </div>
       <h2>当前录制:{{ recordTime }}</h2>
       <div></div>
@@ -311,8 +310,8 @@ export default {
   },
   data() {
     return {
-      recordType:"audio",
-      videoStreamUrl:null,
+      recordType: "audio",
+      videoStreamUrl: null,
       //正在编辑的笔记
       nowEditNote: {
         content: "",
@@ -412,20 +411,26 @@ export default {
   },
   methods: {
     recordAudio() {
-      this.initRecorder();
-      this.recordType="audio";
+      if (this.recordType == "video") {
+        //消除video的遗留
+        let videoele = this.$refs["record_video_player"];
+        videoele.srcObject = undefined;
+        // videoele.stop();
+        this.initRecorder();
+        this.recordType = "audio";
+      }
     },
     recordVideo() {
-      this.initVideoRecorder()
-      this.recordType="video";
+      this.initVideoRecorder();
+      this.recordType = "video";
     },
     async initVideoRecorder() {
       let stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
         video: true,
       });
-      let videoele=this.$refs["record_video_player"];
-      videoele.srcObject=stream;
+      let videoele = this.$refs["record_video_player"];
+      videoele.srcObject = stream;
       videoele.play();
       let recorder = new MediaRecorder(stream, {
         bitsPerSecond: 128000,
