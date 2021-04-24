@@ -89,3 +89,45 @@ class PackageBuilder {
 
     }
 }
+
+class PromiseMe{
+    cbk=null;
+    //
+    state="waiting";
+    data=null;
+    errobj=null
+    resolve=(data)=>{
+        this.state="returned";
+        this.data=data;
+        if(this.cbk!=null) this.cbk(this.data);
+    }
+    reject=(err)=>{
+        this.state="error";
+        this.errobj=err;
+        if(this.err!=null) this.err(this.errobj);
+    };
+    constructor(func){
+        //调用 传入回调
+        func(this.resolve,this.reject);
+    }
+    then(cbk){
+        this.cbk=cbk;
+        if(this.state=="returned"){
+            this.cbk(this.data);
+        }
+    }
+    err;
+    catch(e){
+        this.err=e;
+        if(this.state=="error"){
+            this.err(this.errobj);
+        }
+    }
+    
+}
+
+new PromiseMe((r,j)=>{
+    setTimeout(() => {
+        r("hello")
+    }, 2000);
+}).then(c=>console.log(c))

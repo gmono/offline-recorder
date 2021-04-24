@@ -24,14 +24,19 @@
           <div>
             <el-button type="success" @click="download">下载</el-button>
 
-
-            <el-dropdown style="margin:0 2rem">
+            <el-dropdown style="margin: 0 2rem">
               <el-button type="success" @click="downloadAll">
-                下载全部（悬浮查看更多）<i class="el-icon-arrow-down el-icon--right"></i>
+                下载全部（悬浮查看更多）<i
+                  class="el-icon-arrow-down el-icon--right"
+                ></i>
               </el-button>
               <el-dropdown-menu slot="dropdown">
-                <el-dropdown-item @click="downloadAll_packed">打包下载全部（zip）</el-dropdown-item>
-                <el-dropdown-item @click="downloadAll_packed_private">打包下载全部（专用格式）</el-dropdown-item>
+                <el-dropdown-item @click="downloadAll_packed"
+                  >打包下载全部（zip）</el-dropdown-item
+                >
+                <el-dropdown-item @click="downloadAll_packed_private"
+                  >打包下载全部（专用格式）</el-dropdown-item
+                >
               </el-dropdown-menu>
             </el-dropdown>
             <el-button type="primary" @click="clear">清除历史记录</el-button>
@@ -172,6 +177,8 @@
     <div class="recorder" v-loading="stopping || loading">
       <h2>当前录制:{{ recordTime }}</h2>
       <div></div>
+      <el-button type="success" @click="recordVideo">视频录制 </el-button>
+      <el-button type="success" @click="recordAudio">音频录制</el-button>
       <el-button
         type="success"
         v-if="nowState == 'normal' || nowState == 'stopped'"
@@ -207,12 +214,16 @@
         @click="addPoint"
         >添加标记点(空格键添加)</el-button
       >
-      <el-button
-        type="primary"
-        v-if="nowState == 'recording' || nowState == 'paused'"
-        @click="addNote"
+      <el-button type="primary" v-if="nowState == 'recording'" @click="addNote"
         >添加笔记</el-button
       >
+      <el-button
+        @click="addBrief"
+        type="primary"
+        v-if="nowState == 'recording'"
+      >
+        添加记录点
+      </el-button>
       <!-- 笔记编辑部分 -->
       <!-- 笔记显示部分 -->
       <div>
@@ -227,6 +238,12 @@
           </el-button>
         </ul>
       </div>
+      <!-- 输入回放部分 -->
+      <!-- <div>
+        <time-line-note>
+
+        </time-line-note>
+      </div> -->
     </div>
   </div>
 </template>
@@ -250,31 +267,32 @@ import jszip from "jszip";
 import * as dayjs from "dayjs";
 import * as _ from "lodash";
 import downloadjs from "js-file-downloader";
+import TimeLineNote from "./TimeLineNote.vue";
 const historyKey = "historyBlobs";
 const infoMap = "historyBlobsInfoMap";
 const tempcache = "tempcache";
 const cacheStore = createStore(tempcache, tempcache);
 //录制信息
 const recordingInfo = "recordingInfo";
+/**
+ * 新建笔记
+ */
+function newNote(type, data) {
+  //type 是字符串 目前标准笔记为 note  记录点为brief
+  return {
+    type,
+    data,
+  };
+}
 export default {
+  components: { TimeLineNote },
   name: "HelloWorld",
   props: {
     msg: String,
   },
   async mounted() {
     this.loading = true;
-
-    let stream = await navigator.mediaDevices.getUserMedia({
-      audio: true,
-      video: false,
-    });
-    let recorder = new MediaRecorder(stream, {
-      bitsPerSecond: 128000,
-      audioBitrateMode: "variable",
-      mimeType: "audio/webm",
-    });
-    recorder.ondataavailable = (d) => this.dataavailable(d);
-    this.recorder = recorder;
+    await this.initRecorder();
     //loaddata indexs
     this.loadHistoryIdx();
     //加载上次的缓存
@@ -386,6 +404,38 @@ export default {
     },
   },
   methods: {
+    recordAudio() {
+      this.initRecorder();
+    },
+    recordVideo() {
+      this.initVideoRecorder()
+    },
+    async initVideoRecorder() {
+      let stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: true,
+      });
+      let recorder = new MediaRecorder(stream, {
+        bitsPerSecond: 128000,
+        audioBitrateMode: "variable",
+        mimeType: "video/webm",
+      });
+      recorder.ondataavailable = (d) => this.dataavailable(d);
+      this.recorder = recorder;
+    },
+    async initRecorder() {
+      let stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: false,
+      });
+      let recorder = new MediaRecorder(stream, {
+        bitsPerSecond: 128000,
+        audioBitrateMode: "variable",
+        mimeType: "audio/webm",
+      });
+      recorder.ondataavailable = (d) => this.dataavailable(d);
+      this.recorder = recorder;
+    },
     note_inputcontent() {
       this.noteContentVisible = true;
     },
@@ -492,13 +542,34 @@ export default {
       //clear 然后 显示对话框
       this.isNoteEditing = true;
     },
+    async addBrief() {
+      //弹出添加brief的对话框
+      let res = await this.$prompt("输入记录描述(tips):", "添加记录点");
+      if (res.action == "confirm") {
+        this.nowEditNote.title = res.value;
+        this.nowEditNote.desc = res.value;
+        this.nowEditNote.content = res.value;
+        this.addPoint(this.nowEditNote);
+      } else {
+        this.clearNowEditNote();
+      }
+    },
+    clearNowEditNote() {
+      this.nowEditNote = {
+        title: "",
+        desc: "",
+        content: "",
+      };
+    },
     note_confirm() {
       this.addPoint(this.nowEditNote);
       this.isNoteEditing = false;
+      this.clearNowEditNote();
     },
     async onnote_cancel(done) {
       let res = await this.$confirm("不保存笔记？");
       if (res == "confirm") {
+        this.clearNowEditNote();
         done();
       }
     },
@@ -748,8 +819,10 @@ export default {
     async downloadAll_packed() {
       //下载全部列表中的文件 理论上只需要不断调用playlist_download就可以
       //
-      let res=await this.$confirm("zip压缩下载有总大小限制，可能导致失败与卡顿，确定使用此方式下载吗（可选择专用格式）？")
-      if(res!="confirm"){
+      let res = await this.$confirm(
+        "zip压缩下载有总大小限制，可能导致失败与卡顿，确定使用此方式下载吗（可选择专用格式）？"
+      );
+      if (res != "confirm") {
         return;
       }
       let packmsg = this.$message.warning({
@@ -799,9 +872,7 @@ export default {
      * 专用格式是直接的二进制格式，可用于下载大文件，无压缩，存储速度快
      * 且是通过非内存合并方法，文件大小理论上没有限制
      */
-    downloadAll_packed_private(){
-
-    },
+    downloadAll_packed_private() {},
     async removeNow() {
       await this.playlist_del(this.nowRecordInfo.id);
     },
