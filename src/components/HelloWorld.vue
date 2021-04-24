@@ -18,7 +18,15 @@
           </div>
           <!-- <div ref="player_container" style="height:100px;width:100%"></div> -->
           <div style="margin-top: 2rem"></div>
-          <audio :src="src" controls ref="player" style="outline: none"></audio>
+          <div>
+            <audio
+              :src="src"
+              controls
+              ref="player"
+              style="outline: none"
+            ></audio>
+            <!-- 视频播放器 -->
+          </div>
           <div style="margin-top: 2rem"></div>
 
           <div>
@@ -177,12 +185,26 @@
     <!-- 操控面板 -->
     <div class="recorder" v-loading="stopping || loading">
       <div>
-        <video v-if="recordType=='video'" controls ref="record_video_player"></video>
+        <video
+          v-if="recordType == 'video'"
+          controls
+          ref="record_video_player"
+        ></video>
       </div>
       <h2>当前录制:{{ recordTime }}</h2>
       <div></div>
-      <el-button type="success" @click="recordVideo">视频录制 </el-button>
-      <el-button type="success" @click="recordAudio">音频录制</el-button>
+      <el-button
+        type="primary"
+        v-if="recordType == 'audio'"
+        @click="recordVideo"
+        >视频录制
+      </el-button>
+      <el-button
+        type="primary"
+        v-if="recordType == 'video'"
+        @click="recordAudio"
+        >音频录制</el-button
+      >
       <el-button
         type="success"
         v-if="nowState == 'normal' || nowState == 'stopped'"
