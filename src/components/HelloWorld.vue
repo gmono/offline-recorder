@@ -19,16 +19,19 @@
           <!-- <div ref="player_container" style="height:100px;width:100%"></div> -->
           <div style="margin-top: 2rem"></div>
           <div>
-            <audio
+            <!-- <audio
               :src="src"
               controls
               ref="player"
               style="outline: none"
-            ></audio>
+            ></audio> -->
             <!-- 视频播放器 -->
-            <video v-if="false" :src="src" controls ref="videoPlayer" style="outline:none">
-              
-            </video>
+            <video
+              :src="src"
+              controls
+              ref="player"
+              style="outline: none"
+            ></video>
           </div>
           <div style="margin-top: 2rem"></div>
 
@@ -45,9 +48,9 @@
                 <el-dropdown-item @click="downloadAll_packed"
                   >打包下载全部（zip）</el-dropdown-item
                 >
-                <!-- <el-dropdown-item @click="downloadAll_packed_private"
+                <el-dropdown-item @click="downloadAll_packed_private"
                   >打包下载全部（专用格式）</el-dropdown-item
-                > -->
+                >
               </el-dropdown-menu>
             </el-dropdown>
             <el-button type="primary" @click="clear">清除历史记录</el-button>
@@ -189,22 +192,22 @@
     <div class="recorder" v-loading="stopping || loading">
       <div>
         <video
-          v-if="recordType == 'video'"
+          v-if="recordingInfo.recordType == 'video'"
           controls
           ref="record_video_player"
         ></video>
       </div>
       <h2>当前录制:{{ recordTime }}</h2>
       <div></div>
-      <!-- <el-button
-        type="primary"
-        v-if="recordType == 'audio'"
-        @click="recordVideo"
-        >视频录制
-      </el-button> -->
       <el-button
         type="primary"
-        v-if="recordType == 'video'"
+        v-if="recordingInfo.recordType == 'audio'"
+        @click="recordVideo"
+        >视频录制
+      </el-button>
+      <el-button
+        type="primary"
+        v-if="recordingInfo.recordType == 'video'"
         @click="recordAudio"
         >音频录制</el-button
       >
@@ -226,7 +229,9 @@
         @click="stop"
         >停止</el-button
       >
-      <!-- <el-button type="primary" v-if="nowState=='stopped'" @click="play">播放</el-button> -->
+      <el-button type="primary" v-if="nowState == 'stopped'" @click="play"
+        >播放</el-button
+      >
       <el-button type="primary" v-if="nowState == 'stopped'" @click="download"
         >下载当前录音</el-button
       >
@@ -335,7 +340,6 @@ export default {
   },
   data() {
     return {
-      recordType: "audio",
       videoStreamUrl: null,
       //正在编辑的笔记
       nowEditNote: {
@@ -352,6 +356,8 @@ export default {
       //正在录制的信息 下面的startTime等以后也要转移到这个对象中
       //points:[{type:'pause'|’point'}]
       recordingInfo: {
+        recordType: "audio",
+
         points: [],
       },
       startTime: new Date(),
@@ -436,18 +442,18 @@ export default {
   },
   methods: {
     recordAudio() {
-      if (this.recordType == "video") {
+      if (this.recordingInfo.recordType == "video") {
         //消除video的遗留
         let videoele = this.$refs["record_video_player"];
         videoele.srcObject = undefined;
         // videoele.stop();
         this.initRecorder();
-        this.recordType = "audio";
+        this.recordingInfo.recordType = "audio";
       }
     },
     recordVideo() {
       this.initVideoRecorder();
-      this.recordType = "video";
+      this.recordingInfo.recordType = "video";
     },
     async initVideoRecorder() {
       let stream = await navigator.mediaDevices.getUserMedia({
