@@ -328,6 +328,7 @@ export default {
   async mounted() {
     this.loading = true;
     await this.initRecorder();
+    
     //loaddata indexs
     this.loadHistoryIdx();
     //加载上次的缓存
