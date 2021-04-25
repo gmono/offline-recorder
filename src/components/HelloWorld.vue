@@ -10,6 +10,7 @@
           <div v-if="nowRecordInfo != null">
             <el-card shadow="never">
               <div>名称:{{ nowRecordInfo["name"] }}</div>
+              <div>类型:{{nowRecordInfo["recordType"]}}</div>
               <div>ID:{{ nowRecordInfo["id"] }}</div>
               <div>长度:{{ secondToTime(nowRecordInfo["length"]) }}</div>
               <div>开始时间:{{ formatDate(nowRecordInfo["startTime"]) }}</div>
@@ -30,15 +31,15 @@
               :src="src"
               controls
               ref="player"
-              style="outline: none"
+              style="outline: none;max-width:100%"
             ></video>
           </div>
           <div style="margin-top: 2rem"></div>
 
           <div>
-            <el-button type="success" @click="download">下载</el-button>
+            <el-button  style="margin:2rem"type="success" @click="download">下载</el-button>
 
-            <el-dropdown style="margin: 0 2rem">
+            <el-dropdown style="margin:2rem">
               <el-button type="success" @click="downloadAll">
                 下载全部（悬浮查看更多）<i
                   class="el-icon-arrow-down el-icon--right"
@@ -53,7 +54,7 @@
                 >
               </el-dropdown-menu>
             </el-dropdown>
-            <el-button type="primary" @click="clear">清除历史记录</el-button>
+            <el-button style="margin:2rem" type="primary" @click="clear">清除历史记录</el-button>
           </div>
 
           <!-- <div v-if="nowRecordInfo!=null">
@@ -193,7 +194,7 @@
       <div>
         <video
           v-if="recordingInfo.recordType == 'video'"
-          controls
+          
           ref="record_video_player"
         ></video>
       </div>
@@ -635,6 +636,7 @@ export default {
     },
     //
     play() {
+      this.showPlayer=true;
       /**
        * @type {HTMLAudioElement}
        */
@@ -922,7 +924,9 @@ export default {
      * 专用格式是直接的二进制格式，可用于下载大文件，无压缩，存储速度快
      * 且是通过非内存合并方法，文件大小理论上没有限制
      */
-    downloadAll_packed_private() {},
+    downloadAll_packed_private() {
+      this.$msgbox("尚未实现此功能，敬请期待");
+    },
     async removeNow() {
       await this.playlist_del(this.nowRecordInfo.id);
     },
@@ -966,7 +970,7 @@ export default {
         //暂时不赋值
         timeSpanList: [],
         length: blobs.length,
-        points: this.recordingInfo.points,
+        ...this.recordingInfo
       };
     },
     clearNow() {
