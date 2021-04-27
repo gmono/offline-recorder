@@ -204,6 +204,7 @@
       </div>
       <el-row style="display: flex; justify-content: flex-end">
         <select-source
+          ref="selectSource"
           style="width: 300px"
           @select="selectSource($event)"
         ></select-source>
@@ -340,17 +341,28 @@ export default {
   async mounted() {
     try {
       this.loading = true;
-      await this.initRecorder();
 
       //loaddata indexs
       this.loadHistoryIdx();
       //加载上次的缓存
       //注意 切换媒体源当前尚未适配断点续录功能
       if (!(await this.tempCacheEmpty())) {
-        //有上次缓存 恢复上次状态
-        this.loading = true;
+        //此处已经必须知道之前选择的哪个媒体源了 或者至少知道是音频还是视频
+
+        let info = await this.getTempRecordingInfo();
+        console.log(info);
+        let source = info.source;
+        let selects = this.$refs["selectSource"];
+        let stream = selects.getMediaStream(source);
+        if (info.recordType === "video") {
+          await this.initVideoRecorder(stream);
+        } else {
+          await this.initRecorder(stream);
+        }
         await this.startFormTempCache();
-        this.loading = false;
+      } else {
+        //没有缓存直接初始化
+        await this.initRecorder();
       }
       this.loading = false;
     } catch (e) {
@@ -378,7 +390,7 @@ export default {
       //points:[{type:'pause'|’point'}]
       recordingInfo: {
         recordType: "audio",
-
+        source: "",
         points: [],
       },
       startTime: new Date(),
@@ -468,6 +480,7 @@ export default {
     selectSource(e) {
       if (e == null) return;
       let { type, stream } = e;
+      this.recordingInfo.source = e.name;
       if (type == "audio") {
         //切换预览工具
         //音频
@@ -747,6 +760,10 @@ export default {
       await this.storeRecording();
       this.stateSwitch("recording");
     },
+    async getTempRecordingInfo() {
+      let riinfo = await store.get(recordingInfo);
+      return riinfo;
+    },
     async startFormTempCache() {
       if (await this.tempCacheEmpty()) throw new Error("不存在上次记录");
       this.blobs = await this.loadTempCache();
@@ -757,6 +774,8 @@ export default {
       this.startTime = riinfo["startTime"];
       this.endTime = riinfo["endTime"];
       this.recordingInfo.points = riinfo["points"];
+      //这里要求recorder存在
+      console.log(this.recorder);
       this.recorder.start(1000);
       //state
       this.stateSwitch("recording");

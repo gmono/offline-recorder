@@ -41,7 +41,13 @@ export default {
       console.log(a);
       this.$emit(
         "select",
-        a == null ? a : { stream: a, type: this.typemap[this.selected] }
+        a == null
+          ? a
+          : {
+              stream: a,
+              name: this.selected,
+              type: this.typemap[this.selected],
+            }
       );
     },
   },
