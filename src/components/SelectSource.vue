@@ -1,15 +1,18 @@
 <template>
   <div>
-    medialist:
-    <el-select v-model="selected">
-      <el-option
-        v-for="i in medianames"
-        :label="i.name"
-        :value="i.value"
-        :key="i.value"
-      >
-      </el-option>
-    </el-select>
+    <el-form>
+      <el-form-item label="媒体源">
+        <el-select v-model="selected">
+          <el-option
+            v-for="i in medianames"
+            :label="i.name"
+            :value="i.value"
+            :key="i.value"
+          >
+          </el-option>
+        </el-select>
+      </el-form-item>
+    </el-form>
   </div>
 </template>
 
@@ -36,7 +39,10 @@ export default {
     async selected() {
       let a = await this.getMediaStream(this.selected);
       console.log(a);
-      this.$emit("select", { stream: a, type: this.typemap[this.selected] });
+      this.$emit(
+        "select",
+        a == null ? a : { stream: a, type: this.typemap[this.selected] }
+      );
     },
   },
   async mounted() {},
@@ -63,14 +69,21 @@ export default {
         },
         async audiooutput() {
           //此处可能需要做一个stream来过滤视频
+          //过滤视频
+          //!暂不实现
           return navigator.mediaDevices.getDisplayMedia({
             audio: true,
-            video: false,
+            video: true,
           });
         },
       };
       console.assert(name in funcs);
-      return await funcs[name]();
+      try {
+        return await funcs[name]();
+      } catch (e) {
+        this.$message.error("此媒体源不可用，请切换媒体源");
+        return null;
+      }
     },
   },
 };
