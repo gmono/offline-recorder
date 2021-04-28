@@ -23,13 +23,13 @@ async function itemInfos() {
  * 获取一个Item的blob对象 数据
  */
 export async function getItemBlob(id) {
-    let res = await get(id, itemStore);
+    const res = await get(id, itemStore);
     if (res) return res;
     else return null;
 }
 
 async function storeItem(info, blob) {
-    let id = info.id;
+    const id = info.id;
     await set(id, blob, itemStore);
     await set(id, info, itemInfoStore);
     //还应该回滚
@@ -104,7 +104,7 @@ export default () => ({
 
         async pushHistory(context, item) {
             //实际添加保存 并提交一个更改到store
-            let { info, blob } = item;
+            const { info, blob } = item;
             //执行保存并添加更改
             await storeItem(info, blob);
             //更新
@@ -118,7 +118,7 @@ export default () => ({
             if (context.state.isInited == false) {
                 error("错误，还没初始化");
             }
-            let oldinfo = context.state.historyInfos[id];
+            const oldinfo = context.state.historyInfos[id];
             oldinfo.name = newName;
             context.commit("updateInfo", { id, newInfo: oldinfo });
         },
@@ -131,16 +131,16 @@ export default () => ({
          */
         async ensureInitHistory(context) {
             if (context.state.isInited) return;
-            let infos = await itemInfos();
+            const infos = await itemInfos();
             context.commit("initHistoryInfo", infos);
         },
 
         //工具函数 用于获取一条记录的数据
         async getItem(context, id) {
             if (id in context.state.historyInfos) {
-                let info = context.state.historyInfos[id];
+                const info = context.state.historyInfos[id];
                 //blob
-                let blob = getItemBlob(id);
+                const blob = getItemBlob(id);
                 if (info == null || blob == null) {
                     console.error("获取记录时出现错误，存在空记录");
                     return null;

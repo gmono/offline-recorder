@@ -21,7 +21,7 @@ function newRecordingInfo() {
  */
 function checkpintPauseInfo(type) {
     //时间 和 类型
-    let point = newCheckPoint();
+    const point = newCheckPoint();
     point.type = "pause";
     point.data = {
         pause_type: type,
@@ -34,7 +34,7 @@ function checkpintPauseInfo(type) {
  *  不带数据 的 创建一个标记点
  */
 function checkpointPointInfo() {
-    let point = newCheckPoint();
+    const point = newCheckPoint();
     point.type = "point";
     point.data = {
         type: "point"
@@ -49,7 +49,7 @@ function checkpointPointInfo() {
  * @returns oid
  */
 function checkpointNoteInfo(notedatal) {
-    let point = newCheckPoint();
+    const point = newCheckPoint();
     point.type = "point";
     point.data = {
         type: "note",

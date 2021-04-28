@@ -29,10 +29,10 @@ async function lengthOfCache() {
  */
 async function restoreTempCache() {
     //获取临时缓存 作为一个列表
-    let l = await lengthOfCache();
+    const l = await lengthOfCache();
     nowLength = l;
-    let ret = [];
-    for (let a of range(l)) {
+    const ret = [];
+    for (const a of range(l)) {
 
         ret.push(await get(a, tempCache));
 
@@ -49,7 +49,7 @@ async function pushToCache(blob) {
  * 清理临时缓存
  */
 async function clearCache() {
-    for (let a of range(await lengthOfCache())) {
+    for (const a of range(await lengthOfCache())) {
         await del(a, tempCache);
     }
 }

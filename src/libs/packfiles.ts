@@ -26,9 +26,9 @@ class PromiseSource {
 function promiseify(func, argnum, argidx, getter) {
     //返回promise
     return (...args) => {
-        let promisesource = new PromiseSource();
-        let nargs = []
-        let now = 0;
+        const promisesource = new PromiseSource();
+        const nargs = []
+        const now = 0;
         //func.length 
         for (let i = 0; i < argnum; i++) {
             if (i == argidx) {
@@ -36,7 +36,7 @@ function promiseify(func, argnum, argidx, getter) {
                 nargs[i] = async (...nnargs) => {
                     //参数不知
                     try {
-                        let res = await getter(...nnargs);
+                        const res = await getter(...nnargs);
                         promisesource.resolve(res)
                     } catch (e) {
                         promisesource.reject(e);
@@ -49,11 +49,11 @@ function promiseify(func, argnum, argidx, getter) {
         return promisesource.promise;
     }
 }
-let fssource = new PromiseSource();
+const fssource = new PromiseSource();
 brofs.configure({
     fs: "HTML5FS"
 }, e => {
-    let fs = brofs.BFSRequire();
+    const fs = brofs.BFSRequire();
     fssource.resolve(fs);
 })
 /**

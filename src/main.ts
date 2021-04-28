@@ -65,7 +65,7 @@ Vue.use(VueMq, {
   defaultBreakpoint: "sm" // customize this for SSR
 });
 
-let ele = document.createElement("div");
+const ele = document.createElement("div");
 document.body.append(ele);
 new Vue({
   render: (h) => h(App),
