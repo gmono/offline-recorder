@@ -200,20 +200,31 @@
         <video
           v-show="recordingInfo.recordType == 'video'"
           ref="record_video_player"
-          style="max-width:100%"
+          style="max-width: 100%"
         ></video>
       </div>
-      <el-row style="display: flex; justify-content: flex-end">
+      <el-row
+        style="
+          margin-top: 1.5rem;
+          display: flex;
+          justify-content: flex-end;
+          height: 2.5rem;
+          margin-right: 2.5rem;
+        "
+      >
         <select-source
           ref="selectSource"
           style="width: 300px"
           :value.sync="selectMediaValue"
           @select="sourceSelect"
         ></select-source>
+        <el-button type="primary" size="small"> 初始化 </el-button>
       </el-row>
-      <h2>当前录制:{{ recordTime }}</h2>
+      <el-divider></el-divider>
+      <el-row>
+        <h2>当前录制:{{ recordTime }}</h2>
 
-      <!-- <el-button
+        <!-- <el-button
         type="primary"
         v-if="recordingInfo.recordType == 'audio'"
         @click="recordVideo"
@@ -225,67 +236,71 @@
         @click="recordAudio"
         >音频录制</el-button
       > -->
-      <el-button
-        type="success"
-        v-if="nowState == 'normal' || nowState == 'stopped'"
-        @click="start"
-        >开始</el-button
-      >
-      <el-button type="success" v-if="nowState == 'paused'" @click="resume"
-        >继续</el-button
-      >
-      <el-button type="primary" v-if="nowState == 'recording'" @click="pause"
-        >暂停</el-button
-      >
-      <el-button
-        type="danger"
-        v-if="nowState == 'recording' || nowState == 'paused'"
-        @click="stop"
-        >停止</el-button
-      >
-      <el-button type="primary" v-if="nowState == 'stopped'" @click="play"
-        >播放</el-button
-      >
-      <el-button type="primary" v-if="nowState == 'stopped'" @click="download"
-        >下载当前录音</el-button
-      >
-      <el-button v-if="nowState == 'stopped'" type="danger" @click="removeNow"
-        >删除</el-button
-      >
-      <el-button type="warning" @click="show_player">显示播放器</el-button>
-      <el-divider></el-divider>
-      <!-- 录音时操作 -->
-      <el-button
-        style="margin-right: 2rem"
-        type="primary"
-        v-if="nowState == 'recording'"
-        @click="addPoint"
-        >添加标记点(空格键添加)</el-button
-      >
-      <el-button type="primary" v-if="nowState == 'recording'" @click="addNote"
-        >添加笔记</el-button
-      >
-      <el-button
-        @click="addBrief"
-        type="primary"
-        v-if="nowState == 'recording'"
-      >
-        添加记录点
-      </el-button>
-      <!-- 笔记编辑部分 -->
-      <!-- 笔记显示部分 -->
-      <div>
-        <ul>
-          <el-button
-            @click="showRecordingPoint(idx)"
-            type="text"
-            v-for="(item, idx) in recordingInfo.points"
-            :key="item.time"
-          >
-            {{ item.time }}
-          </el-button>
-        </ul>
-      </div>
+        <el-button
+          type="success"
+          v-if="nowState == 'normal' || nowState == 'stopped'"
+          @click="start"
+          >开始</el-button
+        >
+        <el-button type="success" v-if="nowState == 'paused'" @click="resume"
+          >继续</el-button
+        >
+        <el-button type="primary" v-if="nowState == 'recording'" @click="pause"
+          >暂停</el-button
+        >
+        <el-button
+          type="danger"
+          v-if="nowState == 'recording' || nowState == 'paused'"
+          @click="stop"
+          >停止</el-button
+        >
+        <el-button type="primary" v-if="nowState == 'stopped'" @click="play"
+          >播放</el-button
+        >
+        <el-button type="primary" v-if="nowState == 'stopped'" @click="download"
+          >下载当前录音</el-button
+        >
+        <el-button v-if="nowState == 'stopped'" type="danger" @click="removeNow"
+          >删除</el-button
+        >
+        <el-button type="warning" @click="show_player">显示播放器</el-button>
+        <el-divider></el-divider>
+        <!-- 录音时操作 -->
+        <el-button
+          style="margin-right: 2rem"
+          type="primary"
+          v-if="nowState == 'recording'"
+          @click="addPoint"
+          >添加标记点(空格键添加)</el-button
+        >
+        <el-button
+          type="primary"
+          v-if="nowState == 'recording'"
+          @click="addNote"
+          >添加笔记</el-button
+        >
+        <el-button
+          @click="addBrief"
+          type="primary"
+          v-if="nowState == 'recording'"
+        >
+          添加记录点
+        </el-button>
+        <!-- 笔记编辑部分 -->
+        <!-- 笔记显示部分 -->
+        <div>
+          <ul>
+            <el-button
+              @click="showRecordingPoint(idx)"
+              type="text"
+              v-for="(item, idx) in recordingInfo.points"
+              :key="item.time"
+            >
+              {{ item.time }}
+            </el-button>
+          </ul>
+        </div>
+      </el-row>
       <!-- 输入回放部分 -->
       <!-- <div>
         <time-line-note>
