@@ -206,7 +206,8 @@
         <select-source
           ref="selectSource"
           style="width: 300px"
-          @select="selectSource($event)"
+          :value.sync="selectMediaValue"
+          @select="sourceSelect"
         ></select-source>
       </el-row>
       <h2>当前录制:{{ recordTime }}</h2>
@@ -306,12 +307,11 @@
 
 // import WFPlayer from "wfplayer"
 import { get, set, del, createStore, clear, entries } from "idb-keyval";
-import { delay, json } from "ts-pystyle";
+import { delay, error, json } from "ts-pystyle";
 import filesize from "filesize";
 import store from "store2";
 import jszip from "jszip";
 import dayjs from "dayjs";
-console.log(dayjs);
 import * as _ from "lodash";
 import downloadjs from "js-file-downloader";
 import TimeLineNote from "./TimeLineNote.vue";
@@ -338,6 +338,17 @@ export default {
   props: {
     msg: String,
   },
+  watch: {
+    //把选择的sourcce同步到recordinginfo中
+    /**
+     * 同步
+     */
+    async selectMediaValue() {
+      if (this.recordingInfo != null) {
+        this.recordingInfo.source = this.selectMediaValue;
+      }
+    },
+  },
   async mounted() {
     try {
       this.loading = true;
@@ -348,18 +359,13 @@ export default {
       //注意 切换媒体源当前尚未适配断点续录功能
       if (!(await this.tempCacheEmpty())) {
         //此处已经必须知道之前选择的哪个媒体源了 或者至少知道是音频还是视频
-
+        //获取信息并把source赋值给选择组件 然后从选择组件获取stream
         let info = await this.getTempRecordingInfo();
-        console.log(info);
-        let source = info.source;
-        let selects = this.$refs["selectSource"];
-        let stream = selects.getMediaStream(source);
-        if (info.recordType === "video") {
-          await this.initVideoRecorder(stream);
-        } else {
-          await this.initRecorder(stream);
-        }
-        await this.startFormTempCache();
+        //设置选择器的值
+        this.selectMediaValue = info.source;
+        this.$nextTick(async () => {
+          await this.startFormTempCache();
+        });
       } else {
         //没有缓存直接初始化
         await this.initRecorder();
@@ -373,6 +379,7 @@ export default {
   },
   data() {
     return {
+      selectMediaValue: "mic",
       videoStreamUrl: null,
       //正在编辑的笔记
       nowEditNote: {
@@ -477,16 +484,34 @@ export default {
     autoInit() {
       //选择一个可用的媒体设备
     },
-    selectSource(e) {
-      if (e == null) return;
+    /**
+     * 選擇的時候
+     */
+    async sourceSelect() {
+      
+      //调用切换媒体源函数 切换媒体源并创建上下文
+      let n = await this.$refs["selectSource"].getSelectedStream();
+      if (n == null) error("此媒體源不可用");
+      console.log(n);
+      if (this.selectMediaValue !== "" && n != null) this.setSource(n);
+    },
+    /**
+     * 設定一個source
+     */
+    setSource(e) {
+      if (e == null) {
+        error("設置的媒體源無效");
+        return;
+      }
       let { type, stream } = e;
-      this.recordingInfo.source = e.name;
-      if (type == "audio") {
+      if (this.recordingInfo) this.recordingInfo.source = e.name;
+      console.log(type)
+      if (type === "audio") {
         //切换预览工具
         //音频
-        this.recordingInfo.recordType = "video";
+        this.recordingInfo.recordType = "audio";
         this.initRecorder(stream);
-      } else if (type == "video") {
+      } else if (type === "video") {
         //视频
         this.recordingInfo.recordType = "video";
         this.initVideoRecorder(stream);
@@ -775,12 +800,28 @@ export default {
       this.endTime = riinfo["endTime"];
       this.recordingInfo.points = riinfo["points"];
       //这里要求recorder存在
+      //下面這個過程要求媒體源必須已經設置好
       console.log(this.recorder);
-      this.recorder.start(1000);
-      //state
-      this.stateSwitch("recording");
-      //暂停
-      this.pause();
+      this.loading = true;
+      this.$watch(
+        "recorder",
+        () => {
+          //監聽到recorder可以了就直接進入暫停狀態
+          if (this.recorder) {
+            this.recorder.start(1000);
+            //state
+            this.stateSwitch("recording");
+            //暂停
+            this.pause();
+          } else {
+            error("必須先初始化媒體源和recorder，才能啓動,當前recorder為null");
+          }
+          this.loading = false;
+        },
+        {
+          immediate: true,
+        }
+      );
     },
     async storeRecording() {
       await store.set(recordingInfo, {

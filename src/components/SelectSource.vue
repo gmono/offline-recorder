@@ -2,7 +2,7 @@
   <div>
     <el-form>
       <el-form-item label="媒体源">
-        <el-select v-model="selected">
+        <el-select v-model="selected" @select="select">
           <el-option
             v-for="i in medianames"
             :label="i.name"
@@ -18,6 +18,12 @@
 
 <script>
 export default {
+  props: {
+    value: {
+      type: String,
+      default: "",
+    },
+  },
   data() {
     return {
       selected: "",
@@ -36,23 +42,38 @@ export default {
     };
   },
   watch: {
+    value() {
+      this.selected = this.value;
+    },
     async selected() {
-      let a = await this.getMediaStream(this.selected);
-      console.log(a);
-      this.$emit(
-        "select",
-        a == null
-          ? a
-          : {
-              stream: a,
-              name: this.selected,
-              type: this.typemap[this.selected],
-            }
-      );
+      // let a = await this.getMediaStream(this.selected);
+      this.$emit("update:value", this.selected);
+      this.$emit("select");
+      // this.$emit(
+      //   "select",
+      //   a == null
+      //     ? a
+      //     : {
+      //         stream: a,
+      //         name: this.selected,
+      //         type: this.typemap[this.selected],
+      //       }
+      // );
     },
   },
-  async mounted() {},
   methods: {
+    select() {
+      this.$emit("select");
+    },
+    async getSelectedStream() {
+      let a = await this.getMediaStream(this.selected);
+      if (a == null) return null;
+      return {
+        stream: a,
+        name: this.selected,
+        type: this.typemap[this.selected],
+      };
+    },
     async getMediaStream(name) {
       let funcs = {
         async mic() {
@@ -83,7 +104,7 @@ export default {
           });
         },
       };
-      console.assert(name in funcs);
+      if (name in funcs === false) return null;
       try {
         return await funcs[name]();
       } catch (e) {
