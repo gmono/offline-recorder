@@ -200,6 +200,7 @@
         <video
           v-show="recordingInfo.recordType == 'video'"
           ref="record_video_player"
+          style="max-width:100%"
         ></video>
       </div>
       <el-row style="display: flex; justify-content: flex-end">
@@ -488,7 +489,6 @@ export default {
      * 選擇的時候
      */
     async sourceSelect() {
-      
       //调用切换媒体源函数 切换媒体源并创建上下文
       let n = await this.$refs["selectSource"].getSelectedStream();
       if (n == null) error("此媒體源不可用");
@@ -505,7 +505,7 @@ export default {
       }
       let { type, stream } = e;
       if (this.recordingInfo) this.recordingInfo.source = e.name;
-      console.log(type)
+      console.log(type);
       if (type === "audio") {
         //切换预览工具
         //音频
@@ -814,7 +814,6 @@ export default {
             //暂停
             this.pause();
           } else {
-            error("必須先初始化媒體源和recorder，才能啓動,當前recorder為null");
           }
           this.loading = false;
         },
