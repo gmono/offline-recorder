@@ -10,7 +10,7 @@
           <div v-if="nowRecordInfo != null">
             <el-card shadow="never">
               <div>名称:{{ nowRecordInfo["name"] }}</div>
-              <div>类型:{{nowRecordInfo["recordType"]}}</div>
+              <div>类型:{{ nowRecordInfo["recordType"] }}</div>
               <div>ID:{{ nowRecordInfo["id"] }}</div>
               <div>长度:{{ secondToTime(nowRecordInfo["length"]) }}</div>
               <div>开始时间:{{ formatDate(nowRecordInfo["startTime"]) }}</div>
@@ -31,15 +31,17 @@
               :src="src"
               controls
               ref="player"
-              style="outline: none;max-width:100%"
+              style="outline: none; max-width: 100%"
             ></video>
           </div>
           <div style="margin-top: 2rem"></div>
 
           <div>
-            <el-button  style="margin:2rem"type="success" @click="download">下载</el-button>
+            <el-button style="margin: 2rem" type="success" @click="download"
+              >下载</el-button
+            >
 
-            <el-dropdown style="margin:2rem">
+            <el-dropdown style="margin: 2rem">
               <el-button type="success" @click="downloadAll">
                 下载全部（悬浮查看更多）<i
                   class="el-icon-arrow-down el-icon--right"
@@ -54,7 +56,9 @@
                 >
               </el-dropdown-menu>
             </el-dropdown>
-            <el-button style="margin:2rem" type="primary" @click="clear">清除历史记录</el-button>
+            <el-button style="margin: 2rem" type="primary" @click="clear"
+              >清除历史记录</el-button
+            >
           </div>
 
           <!-- <div v-if="nowRecordInfo!=null">
@@ -189,18 +193,41 @@
         <el-button type="success" @click="note_confirm">确认</el-button>
       </el-row>
     </el-dialog>
+
     <!-- 操控面板 -->
     <div class="recorder" v-loading="stopping || loading">
       <div>
         <video
-          v-if="recordingInfo.recordType == 'video'"
-          
+          v-show="recordingInfo.recordType == 'video'"
           ref="record_video_player"
+          style="max-width: 100%"
         ></video>
       </div>
-      <h2>当前录制:{{ recordTime }}</h2>
-      <div></div>
-      <el-button
+      <el-row
+        style="
+          margin-top: 1.5rem;
+          display: flex;
+          justify-content: flex-end;
+          height: 2.5rem;
+          margin-right: 2.5rem;
+        "
+      >
+        <select-source
+          ref="selectSource"
+          style="width: 300px"
+          :value.sync="selectMediaValue"
+          @select="sourceSelect"
+        ></select-source>
+        <el-button type="primary" size="small" v-if="recorder == null">
+          设备初始化
+        </el-button>
+      </el-row>
+      <el-divider></el-divider>
+      <!-- 控制器区域 -->
+      <el-row>
+        <h2>当前录制:{{ recordTime }}</h2>
+
+        <!-- <el-button
         type="primary"
         v-if="recordingInfo.recordType == 'audio'"
         @click="recordVideo"
@@ -211,68 +238,86 @@
         v-if="recordingInfo.recordType == 'video'"
         @click="recordAudio"
         >音频录制</el-button
-      >
-      <el-button
-        type="success"
-        v-if="nowState == 'normal' || nowState == 'stopped'"
-        @click="start"
-        >开始</el-button
-      >
-      <el-button type="success" v-if="nowState == 'paused'" @click="resume"
-        >继续</el-button
-      >
-      <el-button type="primary" v-if="nowState == 'recording'" @click="pause"
-        >暂停</el-button
-      >
-      <el-button
-        type="danger"
-        v-if="nowState == 'recording' || nowState == 'paused'"
-        @click="stop"
-        >停止</el-button
-      >
-      <el-button type="primary" v-if="nowState == 'stopped'" @click="play"
-        >播放</el-button
-      >
-      <el-button type="primary" v-if="nowState == 'stopped'" @click="download"
-        >下载当前录音</el-button
-      >
-      <el-button v-if="nowState == 'stopped'" type="danger" @click="removeNow"
-        >删除</el-button
-      >
-      <el-button type="warning" @click="show_player">显示播放器</el-button>
-      <el-divider></el-divider>
-      <!-- 录音时操作 -->
-      <el-button
-        style="margin-right: 2rem"
-        type="primary"
-        v-if="nowState == 'recording'"
-        @click="addPoint"
-        >添加标记点(空格键添加)</el-button
-      >
-      <el-button type="primary" v-if="nowState == 'recording'" @click="addNote"
-        >添加笔记</el-button
-      >
-      <el-button
-        @click="addBrief"
-        type="primary"
-        v-if="nowState == 'recording'"
-      >
-        添加记录点
-      </el-button>
-      <!-- 笔记编辑部分 -->
-      <!-- 笔记显示部分 -->
-      <div>
-        <ul>
+      > -->
+        <el-row v-if="recorder == null">
+          <h3>当前设备尚未初始化，请选择媒体完成初始化</h3>
+        </el-row>
+        <el-row v-if="recorder != null">
           <el-button
-            @click="showRecordingPoint(idx)"
-            type="text"
-            v-for="(item, idx) in recordingInfo.points"
-            :key="item.time"
+            type="success"
+            v-if="nowState == 'normal' || nowState == 'stopped'"
+            @click="start"
+            >开始</el-button
           >
-            {{ item.time }}
+          <el-button type="success" v-if="nowState == 'paused'" @click="resume"
+            >继续</el-button
+          >
+          <el-button
+            type="primary"
+            v-if="nowState == 'recording'"
+            @click="pause"
+            >暂停</el-button
+          >
+          <el-button
+            type="danger"
+            v-if="nowState == 'recording' || nowState == 'paused'"
+            @click="stop"
+            >停止</el-button
+          >
+          <el-button type="primary" v-if="nowState == 'stopped'" @click="play"
+            >播放</el-button
+          >
+          <el-button
+            type="primary"
+            v-if="nowState == 'stopped'"
+            @click="download"
+            >下载当前录音</el-button
+          >
+          <el-button
+            v-if="nowState == 'stopped'"
+            type="danger"
+            @click="removeNow"
+            >删除</el-button
+          >
+          <el-button type="warning" @click="show_player">显示播放器</el-button>
+          <el-divider></el-divider>
+          <!-- 录音时操作 -->
+          <el-button
+            style="margin-right: 2rem"
+            type="primary"
+            v-if="nowState == 'recording'"
+            @click="addPoint"
+            >添加标记点(空格键添加)</el-button
+          >
+          <el-button
+            type="primary"
+            v-if="nowState == 'recording'"
+            @click="addNote"
+            >添加笔记</el-button
+          >
+          <el-button
+            @click="addBrief"
+            type="primary"
+            v-if="nowState == 'recording'"
+          >
+            添加记录点
           </el-button>
-        </ul>
-      </div>
+          <!-- 笔记编辑部分 -->
+          <!-- 笔记显示部分 -->
+          <div>
+            <ul>
+              <el-button
+                @click="showRecordingPoint(idx)"
+                type="text"
+                v-for="(item, idx) in recordingInfo.points"
+                :key="item.time"
+              >
+                {{ item.time }}
+              </el-button>
+            </ul>
+          </div>
+        </el-row>
+      </el-row>
       <!-- 输入回放部分 -->
       <!-- <div>
         <time-line-note>
@@ -283,7 +328,7 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 // import * as wave from "wavesurfer.js";
 //标记点类型：point pause 表示手动添加的和暂停时自动添加的
 //标记点中的内容 ，可修改，note:markdown格式保存的原始笔 string
@@ -295,14 +340,15 @@
 
 // import WFPlayer from "wfplayer"
 import { get, set, del, createStore, clear, entries } from "idb-keyval";
-import { delay, json } from "ts-pystyle";
+import { delay, error, json } from "ts-pystyle";
 import filesize from "filesize";
 import store from "store2";
 import jszip from "jszip";
-import * as dayjs from "dayjs";
+import dayjs from "dayjs";
 import * as _ from "lodash";
 import downloadjs from "js-file-downloader";
 import TimeLineNote from "./TimeLineNote.vue";
+import SelectSource from "./SelectSource.vue";
 const historyKey = "historyBlobs";
 const infoMap = "historyBlobsInfoMap";
 const tempcache = "tempcache";
@@ -320,28 +366,53 @@ function newNote(type, data) {
   };
 }
 export default {
-  components: { TimeLineNote },
+  components: { TimeLineNote, SelectSource },
   name: "HelloWorld",
   props: {
     msg: String,
   },
+  watch: {
+    //把选择的sourcce同步到recordinginfo中
+    /**
+     * 同步
+     */
+    async selectMediaValue() {
+      if (this.recordingInfo != null) {
+        this.recordingInfo.source = this.selectMediaValue;
+      }
+    },
+  },
   async mounted() {
-    this.loading = true;
-    await this.initRecorder();
-    
-    //loaddata indexs
-    this.loadHistoryIdx();
-    //加载上次的缓存
-    if (!(await this.tempCacheEmpty())) {
-      //有上次缓存 恢复上次状态
+    try {
       this.loading = true;
-      await this.startFormTempCache();
+
+      //loaddata indexs
+      this.loadHistoryIdx();
+      //加载上次的缓存
+      //注意 切换媒体源当前尚未适配断点续录功能
+      if (!(await this.tempCacheEmpty())) {
+        //此处已经必须知道之前选择的哪个媒体源了 或者至少知道是音频还是视频
+        //获取信息并把source赋值给选择组件 然后从选择组件获取stream
+        let info = await this.getTempRecordingInfo();
+        //设置选择器的值
+        this.selectMediaValue = info.source;
+        this.$nextTick(async () => {
+          await this.startFormTempCache();
+        });
+      } else {
+        //没有缓存直接初始化
+        await this.initRecorder();
+      }
       this.loading = false;
+    } catch (e) {
+      //显示错误
+      this.loading = false;
+      this.$message.error("获取媒体设备错误");
     }
-    this.loading = false;
   },
   data() {
     return {
+      selectMediaValue: "mic",
       videoStreamUrl: null,
       //正在编辑的笔记
       nowEditNote: {
@@ -359,7 +430,7 @@ export default {
       //points:[{type:'pause'|’point'}]
       recordingInfo: {
         recordType: "audio",
-
+        source: "",
         points: [],
       },
       startTime: new Date(),
@@ -443,25 +514,49 @@ export default {
     },
   },
   methods: {
-    recordAudio() {
-      if (this.recordingInfo.recordType == "video") {
-        //消除video的遗留
-        let videoele = this.$refs["record_video_player"];
-        videoele.srcObject = undefined;
-        // videoele.stop();
-        this.initRecorder();
+    autoInit() {
+      //选择一个可用的媒体设备
+    },
+    /**
+     * 選擇的時候
+     */
+    async sourceSelect() {
+      //调用切换媒体源函数 切换媒体源并创建上下文
+      let n = await this.$refs["selectSource"].getSelectedStream();
+      if (n == null) error("此媒體源不可用");
+      console.log(n);
+      if (this.selectMediaValue !== "" && n != null) this.setSource(n);
+    },
+    /**
+     * 設定一個source
+     */
+    setSource(e) {
+      if (e == null) {
+        error("設置的媒體源無效");
+        return;
+      }
+      let { type, stream } = e;
+      if (this.recordingInfo) this.recordingInfo.source = e.name;
+      console.log(type);
+      if (type === "audio") {
+        //切换预览工具
+        //音频
         this.recordingInfo.recordType = "audio";
+        this.initRecorder(stream);
+      } else if (type === "video") {
+        //视频
+        this.recordingInfo.recordType = "video";
+        this.initVideoRecorder(stream);
       }
     },
-    recordVideo() {
-      this.initVideoRecorder();
-      this.recordingInfo.recordType = "video";
-    },
-    async initVideoRecorder() {
-      let stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: true,
-      });
+    //如果提供就用 没有提供直接用摄像头
+    async initVideoRecorder(stream_p) {
+      let stream =
+        stream_p ||
+        (await navigator.mediaDevices.getUserMedia({
+          audio: true,
+          video: true,
+        }));
       let videoele = this.$refs["record_video_player"];
       videoele.srcObject = stream;
       videoele.play();
@@ -475,11 +570,13 @@ export default {
       //建立回放
       // this.videoStreamUrl=URL.createObjectURL(source);
     },
-    async initRecorder() {
-      let stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: false,
-      });
+    async initRecorder(stream_p) {
+      let stream =
+        stream_p ||
+        (await navigator.mediaDevices.getUserMedia({
+          audio: true,
+          video: false,
+        }));
       let recorder = new MediaRecorder(stream, {
         bitsPerSecond: 128000,
         audioBitrateMode: "variable",
@@ -637,7 +734,7 @@ export default {
     },
     //
     play() {
-      this.showPlayer=true;
+      this.showPlayer = true;
       /**
        * @type {HTMLAudioElement}
        */
@@ -720,6 +817,10 @@ export default {
       await this.storeRecording();
       this.stateSwitch("recording");
     },
+    async getTempRecordingInfo() {
+      let riinfo = await store.get(recordingInfo);
+      return riinfo;
+    },
     async startFormTempCache() {
       if (await this.tempCacheEmpty()) throw new Error("不存在上次记录");
       this.blobs = await this.loadTempCache();
@@ -730,11 +831,28 @@ export default {
       this.startTime = riinfo["startTime"];
       this.endTime = riinfo["endTime"];
       this.recordingInfo.points = riinfo["points"];
-      this.recorder.start(1000);
-      //state
-      this.stateSwitch("recording");
-      //暂停
-      this.pause();
+      //这里要求recorder存在
+      //下面這個過程要求媒體源必須已經設置好
+      console.log(this.recorder);
+      this.loading = true;
+      this.$watch(
+        "recorder",
+        () => {
+          //監聽到recorder可以了就直接進入暫停狀態
+          if (this.recorder) {
+            this.recorder.start(1000);
+            //state
+            this.stateSwitch("recording");
+            //暂停
+            this.pause();
+          } else {
+          }
+          this.loading = false;
+        },
+        {
+          immediate: true,
+        }
+      );
     },
     async storeRecording() {
       await store.set(recordingInfo, {
@@ -971,7 +1089,7 @@ export default {
         //暂时不赋值
         timeSpanList: [],
         length: blobs.length,
-        ...this.recordingInfo
+        ...this.recordingInfo,
       };
     },
     clearNow() {

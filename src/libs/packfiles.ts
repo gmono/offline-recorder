@@ -7,6 +7,7 @@ import * as brofs from "browserfs"
 class PromiseSource {
     resolve;
     reject;
+    promise;
     constructor() {
         this.promise = new Promise((r, j) => {
             this.resolve = r;

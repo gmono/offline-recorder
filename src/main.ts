@@ -5,6 +5,12 @@ import * as Elementui from "element-ui";
 import "element-ui/lib/theme-chalk/index.css";
 Vue.config.productionTip = false;
 Vue.use(Elementui);
+
+import Vant from 'vant';
+import 'vant/lib/index.css';
+
+Vue.use(Vant);
+
 import VueFilterDateFormat from "@vuejs-community/vue-filter-date-format";
 
 Vue.use(VueFilterDateFormat);
@@ -25,11 +31,11 @@ import getStore from "./store";
 
 const store = getStore();
 import VueRouter from "vue-router";
-import Recorder from "./components/HelloWorld";
-import NewRecorder from "./components/NewRecorder";
+import Recorder from "./components/HelloWorld.vue";
+import NewRecorder from "./components/NewRecorder.vue";
 //router
 Vue.use(VueRouter);
-import Center from "./components/Center";
+import Center from "./components/Center.vue";
 const routes = [
   { path: "/", component: Recorder },
   { path: "/center", component: Center },

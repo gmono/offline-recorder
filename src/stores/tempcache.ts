@@ -1,6 +1,8 @@
 
 //temp cache 管理
 
+import { createStore, get, del } from "idb-keyval";
+import { keys, range, set } from "ts-pystyle";
 import { Store } from "vuex";
 
 //表示是否存在残留的临时缓存  如果有表示需要继续
