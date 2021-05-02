@@ -1,11 +1,11 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
-    "revision": "1f1fb5fdbdf07e41ac19",
-    "url": "/offline-recorder/dist/css/app.c746d17c.css"
+    "revision": "44905c3ab3859c0990a8",
+    "url": "/offline-recorder/dist/css/app.27cb858b.css"
   },
   {
-    "revision": "dead6bdee57b139821b2",
-    "url": "/offline-recorder/dist/css/chunk-vendors.62bee483.css"
+    "revision": "ec1a914af8dadbefa6c0",
+    "url": "/offline-recorder/dist/css/chunk-vendors.d9ea1b28.css"
   },
   {
     "revision": "535877f50039c0cb49a6196a5b7517cd",
@@ -36,16 +36,16 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/offline-recorder/dist/img/fontello.9354499c.svg"
   },
   {
-    "revision": "28b81b0ba0e56e871725779f2b13a60b",
+    "revision": "764aaaf724c1036dac1c707502204818",
     "url": "/offline-recorder/dist/index.html"
   },
   {
-    "revision": "1f1fb5fdbdf07e41ac19",
-    "url": "/offline-recorder/dist/js/app.97e80b0b.js"
+    "revision": "44905c3ab3859c0990a8",
+    "url": "/offline-recorder/dist/js/app.713d90ca.js"
   },
   {
-    "revision": "dead6bdee57b139821b2",
-    "url": "/offline-recorder/dist/js/chunk-vendors.2af60454.js"
+    "revision": "ec1a914af8dadbefa6c0",
+    "url": "/offline-recorder/dist/js/chunk-vendors.76c7bc97.js"
   },
   {
     "revision": "684b7839abd4f2ddf0d184241709f0ad",
