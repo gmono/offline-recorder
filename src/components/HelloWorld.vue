@@ -372,7 +372,7 @@
                     :key="item.time"
                   >
                     {{ item.time }}
-                  </el-button>s
+                  </el-button>
                 </ul>
               </div>
             </el-row>
@@ -386,7 +386,97 @@
         </div>
       </div>
     </div>
-    <div class="phoneui" v-if="$mq == 'sm'"></div>
+    <div class="phoneui" v-if="$mq == 'sm'">
+      <!-- 计时器 -->
+      <van-row>
+        <van-col span="12" offset="6">
+          <div style="font-size: 3rem">{{ recordTime }}</div>
+        </van-col>
+      </van-row>
+      <van-row v-if="recorder == null">
+        <h3>当前设备尚未初始化，请选择媒体完成初始化</h3>
+      </van-row>
+      <van-row>
+        <van-col span="6">
+          <van-icon
+            size="10vw"
+            @click="addPoint"
+            name="flag-o"
+            v-if="nowState == 'recording'"
+          />
+        </van-col>
+        <van-col span="12">
+          <van-icon
+            name="play-circle-o"
+            v-if="nowState == 'normal' || nowState == 'stopped'"
+            @click="start"
+            size="10vw"
+          />
+
+          <van-icon
+            name="pause-circle-o"
+            v-if="nowState == 'recording'"
+            @click="pause"
+            size="10vw"
+          />
+          <van-icon
+            name="play-circle-o"
+            v-if="nowState == 'paused'"
+            @click="resume"
+            size="10vw"
+          />
+        </van-col>
+        <van-col span="6">
+          <van-icon
+            name="stop-circle-o"
+            v-if="nowState == 'recording' || nowState == 'paused'"
+            @click="stop"
+            size="10vw"
+          />
+        </van-col>
+      </van-row>
+      <van-row v-if="recorder != null">
+        <van-button type="primary" v-if="nowState == 'stopped'" @click="play"
+          >播放</van-button
+        >
+        <van-button
+          type="primary"
+          v-if="nowState == 'stopped'"
+          @click="download"
+          >下载当前录音</van-button
+        >
+        <van-button
+          v-if="nowState == 'stopped'"
+          type="danger"
+          @click="removeNow"
+          >删除</van-button
+        >
+        <van-button type="warning" @click="show_player">显示播放器</van-button>
+        <van-divider></van-divider>
+        <!-- 录音时操作 -->
+        
+        <!-- 笔记编辑部分 -->
+        <!-- 笔记显示部分 -->
+        
+      </van-row>
+      <van-cell-group>
+        这里和pc不一样 这里可以点击并弹出笔记编辑页面
+        <van-cell
+        is-link
+          @click="mobile_editnote(idx)"
+          :title="item.time"
+          v-for="(item, idx) in recordingInfo.points"
+          :key="item.time"
+        >
+        </van-cell>
+      </van-cell-group>
+      <van-tabbar>
+        <van-tabbar-item icon="home-o">录制</van-tabbar-item>
+        <van-tabbar-item icon="search">播放列表</van-tabbar-item>
+        <van-tabbar-item icon="friends-o">统计信息</van-tabbar-item>
+        <van-tabbar-item icon="setting-o">个人信息</van-tabbar-item>
+      </van-tabbar>
+    </div>
   </div>
 </template>
 
@@ -415,6 +505,7 @@ const historyKey = "historyBlobs";
 const infoMap = "historyBlobsInfoMap";
 const tempcache = "tempcache";
 const cacheStore = createStore(tempcache, tempcache);
+import {Notify} from "vant"
 //录制信息
 const recordingInfo = "recordingInfo";
 /**
@@ -577,6 +668,12 @@ export default {
     },
   },
   methods: {
+    //移动端
+    mobile_editnote(idx){
+      //idx在points
+      let item=this.recordingInfo.points[idx];
+      Notify({type:"success",message:JSON.stringify(item)})
+    },
     autoInit() {
       //选择一个可用的媒体设备
     },
@@ -1298,7 +1395,7 @@ export default {
 }
 .inner-card {
   border: #dcdfe6 solid 1px;
-  margin-bottom:2rem;
+  margin-bottom: 2rem;
   width: 61.8%;
   margin: auto;
 }
