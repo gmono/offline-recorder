@@ -115,8 +115,6 @@ export default {
       this.$emit("select");
     },
   },
-  methods: {
-  },
 };
 </script>
 

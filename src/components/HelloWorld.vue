@@ -393,7 +393,20 @@
         </van-col>
       </van-row>
       <van-row v-if="recorder == null">
-        <h3>当前设备尚未初始化，请选择媒体完成初始化</h3>
+        <h3 @click="mobile_show_selectsource=true">当前设备尚未初始化，请选择媒体完成初始化</h3>
+        <van-popup
+          v-model="mobile_show_selectsource"
+          closeable
+          close-icon-position="top-left"
+          position="bottom"
+          :style="{ height: '30%' }"
+        >
+          <select-source
+            style="width: 100%"
+            :value.sync="selectMediaValue"
+            @select="sourceSelect"
+          ></select-source
+        ></van-popup>
       </van-row>
       <van-row>
         <van-col span="6">
@@ -453,15 +466,14 @@
         <van-button type="warning" @click="show_player">显示播放器</van-button>
         <van-divider></van-divider>
         <!-- 录音时操作 -->
-        
+
         <!-- 笔记编辑部分 -->
         <!-- 笔记显示部分 -->
-        
       </van-row>
       <van-cell-group>
         这里和pc不一样 这里可以点击并弹出笔记编辑页面
         <van-cell
-        is-link
+          is-link
           @click="mobile_editnote(idx)"
           :title="item.time"
           v-for="(item, idx) in recordingInfo.points"
@@ -504,7 +516,7 @@ const historyKey = "historyBlobs";
 const infoMap = "historyBlobsInfoMap";
 const tempcache = "tempcache";
 const cacheStore = createStore(tempcache, tempcache);
-import {Notify} from "vant"
+import { Notify } from "vant";
 //录制信息
 const recordingInfo = "recordingInfo";
 /**
@@ -565,7 +577,8 @@ export default {
   },
   data() {
     return {
-      active:"2",
+      mobile_show_selectsource: false,
+      active: "2",
       selectMediaValue: "mic",
       videoStreamUrl: null,
       //正在编辑的笔记
@@ -669,10 +682,10 @@ export default {
   },
   methods: {
     //移动端
-    mobile_editnote(idx){
+    mobile_editnote(idx) {
       //idx在points
-      let item=this.recordingInfo.points[idx];
-      Notify({type:"success",message:JSON.stringify(item)})
+      let item = this.recordingInfo.points[idx];
+      Notify({ type: "success", message: JSON.stringify(item) });
     },
     autoInit() {
       //选择一个可用的媒体设备
