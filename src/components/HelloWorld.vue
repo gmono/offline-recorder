@@ -1,137 +1,183 @@
 <template>
   <div class="hello">
-    <!-- <router-link to="/center">测试</router-link> -->
-    <el-dialog :visible.sync="showPlayer" fullscreen>
-      <div class="player">
-        <div class="player_info">
-          <h3>
-            当前录音:{{ nowRecordInfo == null ? "无" : nowRecordInfo.name }}
-          </h3>
-          <div v-if="nowRecordInfo != null">
-            <el-card shadow="never">
-              <div>名称:{{ nowRecordInfo["name"] }}</div>
-              <div>类型:{{ nowRecordInfo["recordType"] }}</div>
-              <div>ID:{{ nowRecordInfo["id"] }}</div>
-              <div>长度:{{ secondToTime(nowRecordInfo["length"]) }}</div>
-              <div>开始时间:{{ formatDate(nowRecordInfo["startTime"]) }}</div>
-              <div>结束时间:{{ formatDate(nowRecordInfo["endTime"]) }}</div>
-            </el-card>
-          </div>
-          <!-- <div ref="player_container" style="height:100px;width:100%"></div> -->
-          <div style="margin-top: 2rem"></div>
-          <div>
-            <!-- <audio
+    <div class="pcui" v-if="$mq == 'md' || $mq == 'lg'">
+      <!-- <router-link to="/center">测试</router-link> -->
+      <h1>离线录制</h1>
+      <h4>一款直接在浏览器中运行的录音机，数据离线实时保存（尚未适配手机）</h4>
+      <div class="inner-card">
+        <el-collapse v-model="active" accordion>
+          <el-collapse-item name="1">
+            <template slot="title">
+              <div style="padding-left: 2rem">功能</div>
+            </template>
+            <h3>
+              断电，关闭浏览器或录音时间过长超出内存等问题，都不丢失数据，重新打开继续录
+            </h3>
+            <h3>数据保存在浏览器中，存储在本地电脑上，保护隐私</h3>
+            <h3>支持同时录多份录音文件，不会出现不下载就消失的情况</h3>
+            <h3>在线播放器，可在线预览，选择下载</h3>
+            <h3>自动记录额外信息，如录音时间段，长度大小等</h3>
+            <h3>
+              可添加为WebApp（打开Chrome浏览器点击地址栏右侧“安装recorder"，手机可打开手机版Chrome后，根据底部提示操作）
+            </h3>
+          </el-collapse-item>
+          <el-collapse-item name="2">
+            <template slot="title">
+              <div style="padding-left: 2rem">注意事项</div>
+            </template>
+            <h3>
+              切记本录音机不能在同一浏览器上同时打开两个，否则会造成存储混乱，对数据产生不可预测破坏
+            </h3>
+            <h3>请勿清除浏览器记录，录音文件及时下载防止丢失</h3>
+            <h3>
+              录音占用空间过大或一次录音时间过长时可能发生存储加载延迟，出现播放列表短暂不显示，等待一段时间即可
+            </h3>
+            <h3>
+              请不要在一个录音中使用多个源（目前版本），例如如果录屏，就一直使用录屏的视频源，中断后继续时也一样，不要切换到摄像头
+            </h3>
+          </el-collapse-item>
+        </el-collapse>
+      </div>
+      <div style="margin-top: 2rem"></div>
+      <div>
+        <el-dialog :visible.sync="showPlayer" fullscreen>
+          <div class="player">
+            <div class="player_info">
+              <h3>
+                当前录音:{{ nowRecordInfo == null ? "无" : nowRecordInfo.name }}
+              </h3>
+              <div v-if="nowRecordInfo != null">
+                <el-card shadow="never">
+                  <div>名称:{{ nowRecordInfo["name"] }}</div>
+                  <div>类型:{{ nowRecordInfo["recordType"] }}</div>
+                  <div>ID:{{ nowRecordInfo["id"] }}</div>
+                  <div>长度:{{ secondToTime(nowRecordInfo["length"]) }}</div>
+                  <div>
+                    开始时间:{{ formatDate(nowRecordInfo["startTime"]) }}
+                  </div>
+                  <div>结束时间:{{ formatDate(nowRecordInfo["endTime"]) }}</div>
+                </el-card>
+              </div>
+              <!-- <div ref="player_container" style="height:100px;width:100%"></div> -->
+              <div style="margin-top: 2rem"></div>
+              <div>
+                <!-- <audio
               :src="src"
               controls
               ref="player"
               style="outline: none"
             ></audio> -->
-            <!-- 视频播放器 -->
-            <video
-              :src="src"
-              controls
-              ref="player"
-              style="outline: none; max-width: 100%"
-            ></video>
-          </div>
-          <div style="margin-top: 2rem"></div>
+                <!-- 视频播放器 -->
+                <video
+                  :src="src"
+                  controls
+                  ref="player"
+                  style="outline: none; max-width: 100%"
+                ></video>
+              </div>
+              <div style="margin-top: 2rem"></div>
 
-          <div>
-            <el-button style="margin: 2rem" type="success" @click="download"
-              >下载</el-button
-            >
-
-            <el-dropdown style="margin: 2rem">
-              <el-button type="success" @click="downloadAll">
-                下载全部（悬浮查看更多）<i
-                  class="el-icon-arrow-down el-icon--right"
-                ></i>
-              </el-button>
-              <el-dropdown-menu slot="dropdown">
-                <el-dropdown-item @click="downloadAll_packed"
-                  >打包下载全部（zip）</el-dropdown-item
+              <div>
+                <el-button style="margin: 2rem" type="success" @click="download"
+                  >下载</el-button
                 >
-                <el-dropdown-item @click="downloadAll_packed_private"
-                  >打包下载全部（专用格式）</el-dropdown-item
-                >
-              </el-dropdown-menu>
-            </el-dropdown>
-            <el-button style="margin: 2rem" type="primary" @click="clear"
-              >清除历史记录</el-button
-            >
-          </div>
 
-          <!-- <div v-if="nowRecordInfo!=null">
+                <el-dropdown style="margin: 2rem">
+                  <el-button type="success" @click="downloadAll">
+                    下载全部（悬浮查看更多）<i
+                      class="el-icon-arrow-down el-icon--right"
+                    ></i>
+                  </el-button>
+                  <el-dropdown-menu slot="dropdown">
+                    <el-dropdown-item @click="downloadAll_packed"
+                      >打包下载全部（zip）</el-dropdown-item
+                    >
+                    <el-dropdown-item @click="downloadAll_packed_private"
+                      >打包下载全部（专用格式）</el-dropdown-item
+                    >
+                  </el-dropdown-menu>
+                </el-dropdown>
+                <el-button style="margin: 2rem" type="primary" @click="clear"
+                  >清除历史记录</el-button
+                >
+              </div>
+
+              <!-- <div v-if="nowRecordInfo!=null">
             <el-button type="primary" @click="play">播放</el-button>
             <el-button type="primary" @click="play_pause">暂停</el-button>
             <el-button type="primary" @click="play_stop">停止</el-button>
           </div> -->
-        </div>
-        <div class="player_list">
-          <el-table max-height="600" border :data="playList">
-            <el-table-column
-              label="名称"
-              prop="name"
-              sortable=""
-            ></el-table-column>
-            <el-table-column
-              label="开始时间"
-              width="160px"
-              prop="startTime"
-              sortable=""
-            >
-              <template slot-scope="scope">
-                <div>{{ formatDate(scope.row.startTime) }}</div>
-              </template>
-            </el-table-column>
-            <el-table-column width="130px" label="大小" prop="size" sortable="">
-              <template slot-scope="scope">
-                <div>{{ filesize(scope.row.size) }}</div>
-              </template>
-            </el-table-column>
-            <el-table-column
-              width="100px"
-              label="长度"
-              prop="length"
-              sortable=""
-            >
-              <template slot-scope="scope">
-                <div>{{ secondToTime(scope.row.length) }}</div>
-              </template>
-            </el-table-column>
+            </div>
+            <div class="player_list">
+              <el-table max-height="600" border :data="playList">
+                <el-table-column
+                  label="名称"
+                  prop="name"
+                  sortable=""
+                ></el-table-column>
+                <el-table-column
+                  label="开始时间"
+                  width="160px"
+                  prop="startTime"
+                  sortable=""
+                >
+                  <template slot-scope="scope">
+                    <div>{{ formatDate(scope.row.startTime) }}</div>
+                  </template>
+                </el-table-column>
+                <el-table-column
+                  width="130px"
+                  label="大小"
+                  prop="size"
+                  sortable=""
+                >
+                  <template slot-scope="scope">
+                    <div>{{ filesize(scope.row.size) }}</div>
+                  </template>
+                </el-table-column>
+                <el-table-column
+                  width="100px"
+                  label="长度"
+                  prop="length"
+                  sortable=""
+                >
+                  <template slot-scope="scope">
+                    <div>{{ secondToTime(scope.row.length) }}</div>
+                  </template>
+                </el-table-column>
 
-            <el-table-column
-              label="操作"
-              align="right"
-              header-align="center"
-              fixed="right"
-            >
-              <template slot-scope="scope">
-                <el-button
-                  @click="select(scope.row.id)"
-                  type="primary"
-                  size="small"
-                  >查看</el-button
+                <el-table-column
+                  label="操作"
+                  align="right"
+                  header-align="center"
+                  fixed="right"
                 >
-                <el-button
-                  type="danger"
-                  size="small"
-                  @click="playlist_del(scope.row.id)"
-                  >删除</el-button
-                >
-                <el-button
-                  type="success"
-                  size="small"
-                  @click="playlist_download(scope.row.id)"
-                  >下载</el-button
-                >
-                <el-button
-                  type="info"
-                  size="small"
-                  @click="playlist_rename(scope.row.id)"
-                  >重命名</el-button
-                >
-                <!-- <el-tooltip placement="top">
+                  <template slot-scope="scope">
+                    <el-button
+                      @click="select(scope.row.id)"
+                      type="primary"
+                      size="small"
+                      >查看</el-button
+                    >
+                    <el-button
+                      type="danger"
+                      size="small"
+                      @click="playlist_del(scope.row.id)"
+                      >删除</el-button
+                    >
+                    <el-button
+                      type="success"
+                      size="small"
+                      @click="playlist_download(scope.row.id)"
+                      >下载</el-button
+                    >
+                    <el-button
+                      type="info"
+                      size="small"
+                      @click="playlist_rename(scope.row.id)"
+                      >重命名</el-button
+                    >
+                    <!-- <el-tooltip placement="top">
                   <template slot="content">
                     <div v-for="(i, k) in info_generate(scope.row.id)" :key="k">
                       {{ i }}
@@ -139,95 +185,100 @@
                   </template>
                   <el-button type="info" size="small">信息</el-button>
                 </el-tooltip> -->
-              </template>
-            </el-table-column>
-          </el-table>
-        </div>
-      </div>
-    </el-dialog>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
+          </div>
+        </el-dialog>
 
-    <!-- 笔记输入部分 -->
-    <el-dialog
-      class="notedialog"
-      title="输入内容"
-      :visible.sync="noteContentVisible"
-      width="70%"
-      :fullscreen="$mq == 'md'"
-    >
-      <mavon-editor
-        style="width: 100%"
-        :style="{ height: '60vh' }"
-        v-model="nowEditNote.content"
-      ></mavon-editor>
-    </el-dialog>
-    <el-dialog
-      :show-close="false"
-      title="输入笔记"
-      :visible.sync="isNoteEditing"
-      width="70%"
-      :fullscreen="$mq == 'md'"
-      :before-close="onnote_cancel"
-    >
-      <el-form>
-        <el-form-item label="标题">
-          <el-input autofocus v-model="nowEditNote.title"></el-input>
-        </el-form-item>
-        <el-form-item label="简要描述">
-          <el-input v-model="nowEditNote.desc"></el-input>
-        </el-form-item>
-        <el-form-item style="display: flex; flex-direction: row-reverse">
-          <!-- 输入笔记 -->
-          <span style="margin-right: 3rem; font-size: 16px; font-weight: bold"
-            >已输入:{{ nowEditNote.content.length }}字</span
+        <!-- 笔记输入部分 -->
+        <el-dialog
+          class="notedialog"
+          title="输入内容"
+          :visible.sync="noteContentVisible"
+          width="70%"
+          :fullscreen="$mq == 'md'"
+        >
+          <mavon-editor
+            style="width: 100%"
+            :style="{ height: '60vh' }"
+            v-model="nowEditNote.content"
+          ></mavon-editor>
+        </el-dialog>
+        <el-dialog
+          :show-close="false"
+          title="输入笔记"
+          :visible.sync="isNoteEditing"
+          width="70%"
+          :fullscreen="$mq == 'md'"
+          :before-close="onnote_cancel"
+        >
+          <el-form>
+            <el-form-item label="标题">
+              <el-input autofocus v-model="nowEditNote.title"></el-input>
+            </el-form-item>
+            <el-form-item label="简要描述">
+              <el-input v-model="nowEditNote.desc"></el-input>
+            </el-form-item>
+            <el-form-item style="display: flex; flex-direction: row-reverse">
+              <!-- 输入笔记 -->
+              <span
+                style="margin-right: 3rem; font-size: 16px; font-weight: bold"
+                >已输入:{{ nowEditNote.content.length }}字</span
+              >
+              <el-button type="primary" @click="note_inputcontent"
+                >输入内容</el-button
+              >
+            </el-form-item>
+          </el-form>
+
+          <el-row
+            style="
+              margin-top: 1.5rem;
+              display: flex;
+              justify-content: space-around;
+            "
           >
-          <el-button type="primary" @click="note_inputcontent"
-            >输入内容</el-button
+            <el-button @click="note_cancel">取消</el-button>
+            <el-button type="success" @click="note_confirm">确认</el-button>
+          </el-row>
+        </el-dialog>
+
+        <!-- 操控面板 -->
+        <div class="recorder" v-loading="stopping || loading">
+          <div>
+            <video
+              v-show="recordingInfo.recordType == 'video'"
+              ref="record_video_player"
+              style="max-width: 100%"
+            ></video>
+          </div>
+          <el-row
+            style="
+              margin-top: 1.5rem;
+              display: flex;
+              justify-content: flex-end;
+              height: 2.5rem;
+              margin-right: 2.5rem;
+            "
           >
-        </el-form-item>
-      </el-form>
-
-      <el-row
-        style="margin-top: 1.5rem; display: flex; justify-content: space-around"
-      >
-        <el-button @click="note_cancel">取消</el-button>
-        <el-button type="success" @click="note_confirm">确认</el-button>
-      </el-row>
-    </el-dialog>
-
-    <!-- 操控面板 -->
-    <div class="recorder" v-loading="stopping || loading">
-      <div>
-        <video
-          v-show="recordingInfo.recordType == 'video'"
-          ref="record_video_player"
-          style="max-width: 100%"
-        ></video>
-      </div>
-      <el-row
-        style="
-          margin-top: 1.5rem;
-          display: flex;
-          justify-content: flex-end;
-          height: 2.5rem;
-          margin-right: 2.5rem;
-        "
-      >
-        <select-source
-          ref="selectSource"
-          style="width: 300px"
-          :value.sync="selectMediaValue"
-          @select="sourceSelect"
-        ></select-source>
-        <el-button type="primary" size="small" v-if="recorder == null">
+            <select-source
+              ref="selectSource"
+              style="width: 300px"
+              :value.sync="selectMediaValue"
+              @select="sourceSelect"
+            ></select-source>
+            <!-- <el-button type="primary" size="small" v-if="recorder == null">
           设备初始化
-        </el-button>
-      </el-row>
-      <el-divider></el-divider>
-      <!-- 控制器区域 -->
-      <el-row>
-        <h2>当前录制:{{ recordTime }}</h2>
+        </el-button> -->
+          </el-row>
+          <el-divider></el-divider>
+          <!-- 控制器区域 -->
+          <el-row>
+            <h2>当前录制:{{ recordTime }}</h2>
 
-        <!-- <el-button
+            <!-- <el-button
         type="primary"
         v-if="recordingInfo.recordType == 'audio'"
         @click="recordVideo"
@@ -239,96 +290,107 @@
         @click="recordAudio"
         >音频录制</el-button
       > -->
-        <el-row v-if="recorder == null">
-          <h3>当前设备尚未初始化，请选择媒体完成初始化</h3>
-        </el-row>
-        <el-row v-if="recorder != null">
-          <el-button
-            type="success"
-            v-if="nowState == 'normal' || nowState == 'stopped'"
-            @click="start"
-            >开始</el-button
-          >
-          <el-button type="success" v-if="nowState == 'paused'" @click="resume"
-            >继续</el-button
-          >
-          <el-button
-            type="primary"
-            v-if="nowState == 'recording'"
-            @click="pause"
-            >暂停</el-button
-          >
-          <el-button
-            type="danger"
-            v-if="nowState == 'recording' || nowState == 'paused'"
-            @click="stop"
-            >停止</el-button
-          >
-          <el-button type="primary" v-if="nowState == 'stopped'" @click="play"
-            >播放</el-button
-          >
-          <el-button
-            type="primary"
-            v-if="nowState == 'stopped'"
-            @click="download"
-            >下载当前录音</el-button
-          >
-          <el-button
-            v-if="nowState == 'stopped'"
-            type="danger"
-            @click="removeNow"
-            >删除</el-button
-          >
-          <el-button type="warning" @click="show_player">显示播放器</el-button>
-          <el-divider></el-divider>
-          <!-- 录音时操作 -->
-          <el-button
-            style="margin-right: 2rem"
-            type="primary"
-            v-if="nowState == 'recording'"
-            @click="addPoint"
-            >添加标记点(空格键添加)</el-button
-          >
-          <el-button
-            type="primary"
-            v-if="nowState == 'recording'"
-            @click="addNote"
-            >添加笔记</el-button
-          >
-          <el-button
-            @click="addBrief"
-            type="primary"
-            v-if="nowState == 'recording'"
-          >
-            添加记录点
-          </el-button>
-          <!-- 笔记编辑部分 -->
-          <!-- 笔记显示部分 -->
-          <div>
-            <ul>
+            <el-row v-if="recorder == null">
+              <h3>当前设备尚未初始化，请选择媒体完成初始化</h3>
+            </el-row>
+            <el-row v-if="recorder != null">
               <el-button
-                @click="showRecordingPoint(idx)"
-                type="text"
-                v-for="(item, idx) in recordingInfo.points"
-                :key="item.time"
+                type="success"
+                v-if="nowState == 'normal' || nowState == 'stopped'"
+                @click="start"
+                >开始</el-button
               >
-                {{ item.time }}
+              <el-button
+                type="success"
+                v-if="nowState == 'paused'"
+                @click="resume"
+                >继续</el-button
+              >
+              <el-button
+                type="primary"
+                v-if="nowState == 'recording'"
+                @click="pause"
+                >暂停</el-button
+              >
+              <el-button
+                type="danger"
+                v-if="nowState == 'recording' || nowState == 'paused'"
+                @click="stop"
+                >停止</el-button
+              >
+              <el-button
+                type="primary"
+                v-if="nowState == 'stopped'"
+                @click="play"
+                >播放</el-button
+              >
+              <el-button
+                type="primary"
+                v-if="nowState == 'stopped'"
+                @click="download"
+                >下载当前录音</el-button
+              >
+              <el-button
+                v-if="nowState == 'stopped'"
+                type="danger"
+                @click="removeNow"
+                >删除</el-button
+              >
+              <el-button type="warning" @click="show_player"
+                >显示播放器</el-button
+              >
+              <el-divider></el-divider>
+              <!-- 录音时操作 -->
+              <el-button
+                style="margin-right: 2rem"
+                type="primary"
+                v-if="nowState == 'recording'"
+                @click="addPoint"
+                >添加标记点(空格键添加)</el-button
+              >
+              <el-button
+                type="primary"
+                v-if="nowState == 'recording'"
+                @click="addNote"
+                >添加笔记</el-button
+              >
+              <el-button
+                @click="addBrief"
+                type="primary"
+                v-if="nowState == 'recording'"
+              >
+                添加记录点
               </el-button>
-            </ul>
-          </div>
-        </el-row>
-      </el-row>
-      <!-- 输入回放部分 -->
-      <!-- <div>
+              <!-- 笔记编辑部分 -->
+              <!-- 笔记显示部分 -->
+              <div>
+                <ul>
+                  <el-button
+                    @click="showRecordingPoint(idx)"
+                    type="text"
+                    v-for="(item, idx) in recordingInfo.points"
+                    :key="item.time"
+                  >
+                    {{ item.time }}
+                  </el-button>s
+                </ul>
+              </div>
+            </el-row>
+          </el-row>
+          <!-- 输入回放部分 -->
+          <!-- <div>
         <time-line-note>
 
         </time-line-note>
       </div> -->
+        </div>
+      </div>
     </div>
+    <div class="phoneui" v-if="$mq == 'sm'"></div>
   </div>
 </template>
 
-<script lang="ts">
+<script>
 // import * as wave from "wavesurfer.js";
 //标记点类型：point pause 表示手动添加的和暂停时自动添加的
 //标记点中的内容 ，可修改，note:markdown格式保存的原始笔 string
@@ -383,6 +445,7 @@ export default {
     },
   },
   async mounted() {
+    console.log(this.$mq);
     try {
       this.loading = true;
 
@@ -1227,6 +1290,21 @@ export default {
 @media screen and (min-width: 950px) {
   .notedialog .el-dialog {
     margin-top: 10vh !important;
+  }
+}
+
+.feature-text {
+  font-size: 1.5rem;
+}
+.inner-card {
+  border: #dcdfe6 solid 1px;
+  margin-bottom:2rem;
+  width: 61.8%;
+  margin: auto;
+}
+@media screen and (max-width: 800px) {
+  .inner-card {
+    width: 100%;
   }
 }
 </style>
