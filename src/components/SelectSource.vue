@@ -1,8 +1,8 @@
 <template>
   <div>
-    <el-form>
+    <el-form v-if="$mq!='sm'">
       <el-form-item label="媒体源">
-        <el-select v-model="selected" @select="select">
+        <el-select v-model="selected">
           <el-option
             v-for="i in medianames"
             :label="i.name"
@@ -13,10 +13,67 @@
         </el-select>
       </el-form-item>
     </el-form>
+    <div v-if="$mq=='sm'">
+      <van-picker title="选择媒体源" show-toolbar :columns="selectList" @confirm="select" />
+
+    </div>
+
   </div>
 </template>
 
 <script>
+import { error } from 'ts-pystyle';
+import _ from 'lodash';
+export async function getMediaStream(name) {
+  let funcs = {
+    async mic() {
+      return navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: false,
+      });
+    },
+    async capture() {
+      return navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: true,
+      });
+    },
+    async screen() {
+      return navigator.mediaDevices.getDisplayMedia({
+        audio: true,
+        video: true,
+      });
+    },
+    async audiooutput() {
+      //此处可能需要做一个stream来过滤视频
+      //过滤视频
+      //!暂不实现
+      return navigator.mediaDevices.getDisplayMedia({
+        audio: true,
+        video: true,
+      });
+    },
+  };
+  if (name in funcs === false) return null;
+  try {
+    return await funcs[name]();
+  } catch (e) {
+    error("此媒体源不可用，请切换媒体源");
+  }
+}
+const typemap= {
+        mic: "audio",
+        capture: "video",
+        screen: "video",
+        audiooutput: "audio",
+      }
+export async function getMedia(name){
+        return {
+        stream: await getMediaStream(name),
+        name: name,
+        type: typemap[name],
+      };
+}
 export default {
   props: {
     value: {
@@ -33,13 +90,20 @@ export default {
         { name: "录屏(视频+电脑内音频）", value: "screen" },
         { name: "内部音源(电脑内音频）", value: "audiooutput" },
       ],
-      typemap: {
-        mic: "audio",
-        capture: "video",
-        screen: "video",
-        audiooutput: "audio",
-      },
+      
     };
+  },
+  computed:{
+    selectList(){
+      return this.medianames.map(v=>v.name);
+      
+    }
+  },
+  methods:{
+    select(value,idx){
+      let item=this.medianames[idx];
+      this.selected=item.value;
+    }
   },
   watch: {
     value() {
@@ -49,69 +113,9 @@ export default {
       // let a = await this.getMediaStream(this.selected);
       this.$emit("update:value", this.selected);
       this.$emit("select");
-      // this.$emit(
-      //   "select",
-      //   a == null
-      //     ? a
-      //     : {
-      //         stream: a,
-      //         name: this.selected,
-      //         type: this.typemap[this.selected],
-      //       }
-      // );
     },
   },
   methods: {
-    select() {
-      this.$emit("select");
-    },
-    async getSelectedStream() {
-      let a = await this.getMediaStream(this.selected);
-      if (a == null) return null;
-      return {
-        stream: a,
-        name: this.selected,
-        type: this.typemap[this.selected],
-      };
-    },
-    async getMediaStream(name) {
-      let funcs = {
-        async mic() {
-          return navigator.mediaDevices.getUserMedia({
-            audio: true,
-            video: false,
-          });
-        },
-        async capture() {
-          return navigator.mediaDevices.getUserMedia({
-            audio: true,
-            video: true,
-          });
-        },
-        async screen() {
-          return navigator.mediaDevices.getDisplayMedia({
-            audio: true,
-            video: true,
-          });
-        },
-        async audiooutput() {
-          //此处可能需要做一个stream来过滤视频
-          //过滤视频
-          //!暂不实现
-          return navigator.mediaDevices.getDisplayMedia({
-            audio: true,
-            video: true,
-          });
-        },
-      };
-      if (name in funcs === false) return null;
-      try {
-        return await funcs[name]();
-      } catch (e) {
-        this.$message.error("此媒体源不可用，请切换媒体源");
-        return null;
-      }
-    },
   },
 };
 </script>

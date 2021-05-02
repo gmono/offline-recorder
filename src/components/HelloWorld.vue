@@ -264,7 +264,6 @@
             "
           >
             <select-source
-              ref="selectSource"
               style="width: 300px"
               :value.sync="selectMediaValue"
               @select="sourceSelect"
@@ -500,7 +499,7 @@ import dayjs from "dayjs";
 import * as _ from "lodash";
 import downloadjs from "js-file-downloader";
 import TimeLineNote from "./TimeLineNote.vue";
-import SelectSource from "./SelectSource.vue";
+import SelectSource, { getMedia, getMediaStream } from "./SelectSource.vue";
 const historyKey = "historyBlobs";
 const infoMap = "historyBlobsInfoMap";
 const tempcache = "tempcache";
@@ -566,6 +565,7 @@ export default {
   },
   data() {
     return {
+      active:"2",
       selectMediaValue: "mic",
       videoStreamUrl: null,
       //正在编辑的笔记
@@ -682,9 +682,10 @@ export default {
      */
     async sourceSelect() {
       //调用切换媒体源函数 切换媒体源并创建上下文
-      let n = await this.$refs["selectSource"].getSelectedStream();
+      let n = await getMedia(this.selectMediaValue);
       if (n == null) error("此媒體源不可用");
       console.log(n);
+      debugger;
       if (this.selectMediaValue !== "" && n != null) this.setSource(n);
     },
     /**
