@@ -475,7 +475,7 @@
         <van-cell
           is-link
           @click="mobile_editnote(idx)"
-          :title="item.time"
+          :title="item.time.toString()"
           v-for="(item, idx) in recordingInfo.points"
           :key="item.time"
         >
@@ -735,7 +735,7 @@ export default {
       videoele.srcObject = stream;
       videoele.play();
       let recorder = new MediaRecorder(stream, {
-        bitsPerSecond: 128000,
+        bitsPerSecond: 1280000,
         audioBitrateMode: "variable",
         mimeType: "video/webm",
       });
