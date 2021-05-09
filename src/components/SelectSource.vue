@@ -48,10 +48,16 @@ export async function getMediaStream(name) {
       //此处可能需要做一个stream来过滤视频
       //过滤视频
       //!暂不实现
-      return navigator.mediaDevices.getDisplayMedia({
+      /**
+       * @type {MediaStream}
+       */
+      let raw=await navigator.mediaDevices.getDisplayMedia({
         audio: true,
         video: true,
       });
+      let audios=raw.getAudioTracks();
+      console.log(audios)
+      return new MediaStream(audios)
     },
   };
   if (name in funcs === false) return null;

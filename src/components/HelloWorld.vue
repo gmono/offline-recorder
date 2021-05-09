@@ -393,7 +393,7 @@
         </van-col>
       </van-row>
       <van-row v-if="recorder == null">
-        <h3 @click="mobile_show_selectsource=true">当前设备尚未初始化，请选择媒体完成初始化</h3>
+        <van-button @click="mobile_show_selectsource=true">当前设备尚未初始化，请选择媒体完成初始化</van-button>
         <van-popup
           v-model="mobile_show_selectsource"
           closeable
