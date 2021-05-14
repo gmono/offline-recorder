@@ -560,10 +560,16 @@ export default {
       let videoele = this.$refs["record_video_player"];
       videoele.srcObject = stream;
       videoele.play();
+      //输入码率
+      let bit = 1500000;
+      let res = await this.$prompt("输入总码率（单位Mbps ，推荐1.5）:");
+      if (res.action == "confirm") {
+        bit = parseInt(res.value)*1000*1000;
+      }
       let recorder = new MediaRecorder(stream, {
-        bitsPerSecond: 128000,
+        bitsPerSecond: bit,
         audioBitrateMode: "variable",
-        mimeType: "video/webm",
+        mimeType: "video/webm;codecs=vp9",
       });
       recorder.ondataavailable = (d) => this.dataavailable(d);
       this.recorder = recorder;
@@ -577,10 +583,16 @@ export default {
           audio: true,
           video: false,
         }));
+      //输入码率
+      let bit = 128000;
+      let res = await this.$prompt("输入音频码率（单位 kbps,推荐128）:");
+      if (res.action == "confirm") {
+        bit = parseInt(res.value)*1000;
+      }
       let recorder = new MediaRecorder(stream, {
-        bitsPerSecond: 128000,
+        bitsPerSecond: bit,
         audioBitrateMode: "variable",
-        mimeType: "audio/webm",
+        mimeType: "audio/webm;codecs:opus",
       });
       recorder.ondataavailable = (d) => this.dataavailable(d);
       this.recorder = recorder;
