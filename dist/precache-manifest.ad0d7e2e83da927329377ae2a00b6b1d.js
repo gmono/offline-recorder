@@ -1,7 +1,7 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
-    "revision": "44905c3ab3859c0990a8",
-    "url": "/offline-recorder/dist/css/app.27cb858b.css"
+    "revision": "119e248f36093f09595e",
+    "url": "/offline-recorder/dist/css/app.1610db69.css"
   },
   {
     "revision": "ec1a914af8dadbefa6c0",
@@ -36,12 +36,12 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "/offline-recorder/dist/img/fontello.9354499c.svg"
   },
   {
-    "revision": "764aaaf724c1036dac1c707502204818",
+    "revision": "d9a98383f91424e292d9aee6d82ae88c",
     "url": "/offline-recorder/dist/index.html"
   },
   {
-    "revision": "44905c3ab3859c0990a8",
-    "url": "/offline-recorder/dist/js/app.713d90ca.js"
+    "revision": "119e248f36093f09595e",
+    "url": "/offline-recorder/dist/js/app.f0e1b8d5.js"
   },
   {
     "revision": "ec1a914af8dadbefa6c0",

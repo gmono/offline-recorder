@@ -447,29 +447,7 @@
           />
         </van-col>
       </van-row>
-      <van-row v-if="recorder != null">
-        <van-button type="primary" v-if="nowState == 'stopped'" @click="play"
-          >播放</van-button
-        >
-        <van-button
-          type="primary"
-          v-if="nowState == 'stopped'"
-          @click="download"
-          >下载当前录音</van-button
-        >
-        <van-button
-          v-if="nowState == 'stopped'"
-          type="danger"
-          @click="removeNow"
-          >删除</van-button
-        >
-        <van-button type="warning" @click="show_player">显示播放器</van-button>
-        <van-divider></van-divider>
-        <!-- 录音时操作 -->
-
-        <!-- 笔记编辑部分 -->
-        <!-- 笔记显示部分 -->
-      </van-row>
+    
       <van-cell-group>
         这里和pc不一样 这里可以点击并弹出笔记编辑页面
         <van-cell
@@ -734,10 +712,16 @@ export default {
       let videoele = this.$refs["record_video_player"];
       videoele.srcObject = stream;
       videoele.play();
+      //输入码率
+      let bit = 1500000;
+      let res = await this.$prompt("输入总码率（单位Mbps ，推荐1.5）:");
+      if (res.action == "confirm") {
+        bit = parseInt(res.value)*1000*1000;
+      }
       let recorder = new MediaRecorder(stream, {
-        bitsPerSecond: 1280000,
+        bitsPerSecond: bit,
         audioBitrateMode: "variable",
-        mimeType: "video/webm",
+        mimeType: "video/webm;codecs=vp9",
       });
       recorder.ondataavailable = (d) => this.dataavailable(d);
       this.recorder = recorder;
@@ -751,10 +735,16 @@ export default {
           audio: true,
           video: false,
         }));
+      //输入码率
+      let bit = 128000;
+      let res = await this.$prompt("输入音频码率（单位 kbps,推荐128）:");
+      if (res.action == "confirm") {
+        bit = parseInt(res.value)*1000;
+      }
       let recorder = new MediaRecorder(stream, {
-        bitsPerSecond: 128000,
+        bitsPerSecond: bit,
         audioBitrateMode: "variable",
-        mimeType: "audio/webm",
+        mimeType: "audio/webm;codecs:opus",
       });
       recorder.ondataavailable = (d) => this.dataavailable(d);
       this.recorder = recorder;

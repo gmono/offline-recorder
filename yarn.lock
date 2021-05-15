@@ -828,9 +828,15 @@
     esutils "^2.0.2"
 
 "@babel/runtime@7.x":
+<<<<<<< HEAD
   version "7.13.17"
   resolved "https://registry.nlark.com/@babel/runtime/download/@babel/runtime-7.13.17.tgz?cache=0&sync_timestamp=1618960866380&other_urls=https%3A%2F%2Fregistry.nlark.com%2F%40babel%2Fruntime%2Fdownload%2F%40babel%2Fruntime-7.13.17.tgz#8966d1fc9593bf848602f0662d6b4d0069e3a7ec"
   integrity sha1-iWbR/JWTv4SGAvBmLWtNAGnjp+w=
+=======
+  version "7.14.0"
+  resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.14.0.tgz#46794bc20b612c5f75e62dd071e24dfd95f1cbe6"
+  integrity sha512-JELkvo/DlpNdJ7dlyw/eY7E0suy5i5GQH+Vlxaq1nsNJ+H7f4Vtv3jMeCEgRhZZQFXTjldYfQgv2qmM6M1v5wA==
+>>>>>>> 72f587a674048b28ffcbace880b0b044da3da4d8
   dependencies:
     regenerator-runtime "^0.13.4"
 
@@ -940,6 +946,7 @@
   resolved "https://registry.npm.taobao.org/@nodelib/fs.stat/download/@nodelib/fs.stat-1.1.3.tgz?cache=0&sync_timestamp=1609074523193&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40nodelib%2Ffs.stat%2Fdownload%2F%40nodelib%2Ffs.stat-1.1.3.tgz#2b5a3ab3f918cca48a8c754c08168e3f03eba61b"
   integrity sha1-K1o6s/kYzKSKjHVMCBaOPwPrphs=
 
+<<<<<<< HEAD
 "@nodelib/fs.walk@^1.2.3":
   version "1.2.6"
   resolved "https://registry.npm.taobao.org/@nodelib/fs.walk/download/@nodelib/fs.walk-1.2.6.tgz?cache=0&sync_timestamp=1609077064096&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40nodelib%2Ffs.walk%2Fdownload%2F%40nodelib%2Ffs.walk-1.2.6.tgz#cce9396b30aa5afe9e3756608f5831adcb53d063"
@@ -952,6 +959,12 @@
   version "2.9.2"
   resolved "https://registry.npm.taobao.org/@popperjs/core/download/@popperjs/core-2.9.2.tgz?cache=0&sync_timestamp=1617290324040&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40popperjs%2Fcore%2Fdownload%2F%40popperjs%2Fcore-2.9.2.tgz#adea7b6953cbb34651766b0548468e743c6a2353"
   integrity sha1-rep7aVPLs0ZRdmsFSEaOdDxqI1M=
+=======
+"@popperjs/core@^2.9.2":
+  version "2.9.2"
+  resolved "https://registry.yarnpkg.com/@popperjs/core/-/core-2.9.2.tgz#adea7b6953cbb34651766b0548468e743c6a2353"
+  integrity sha512-VZMYa7+fXHdwIq1TDhSXoVmSPEGM/aa+6Aiq3nVVJ9bXr24zScr+NlKFKC3iPljA7ho/GAZr+d2jOf5GIRC30Q==
+>>>>>>> 72f587a674048b28ffcbace880b0b044da3da4d8
 
 "@soda/friendly-errors-webpack-plugin@^1.7.1":
   version "1.8.0"
@@ -1162,6 +1175,7 @@
     "@types/webpack-sources" "*"
     source-map "^0.6.0"
 
+<<<<<<< HEAD
 "@typescript-eslint/eslint-plugin@^4.18.0":
   version "4.22.0"
   resolved "https://registry.nlark.com/@typescript-eslint/eslint-plugin/download/@typescript-eslint/eslint-plugin-4.22.0.tgz#3d5f29bb59e61a9dba1513d491b059e536e16dbc"
@@ -1241,13 +1255,24 @@
   version "1.1.0"
   resolved "https://registry.npm.taobao.org/@vant/popperjs/download/@vant/popperjs-1.1.0.tgz#b4edee5bbfa6fb18705986e313d4fd5f17942a0f"
   integrity sha1-tO3uW7+m+xhwWYbjE9T9XxeUKg8=
+=======
+"@vant/icons@1.5.2":
+  version "1.5.2"
+  resolved "https://registry.yarnpkg.com/@vant/icons/-/icons-1.5.2.tgz#3f3ea353a0eacd38c113757bd31836489facb10b"
+  integrity sha512-Gy2mFIgObvCh1azp6LklQYsNFrCjMLxf/mEzHD6WV0pZbMBNjsb7bWvAjPo3Wygo9IVtGqi/36wrtosv3PkyRg==
+
+"@vant/popperjs@^1.0.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@vant/popperjs/-/popperjs-1.1.0.tgz#b4edee5bbfa6fb18705986e313d4fd5f17942a0f"
+  integrity sha512-8MD1gz146awV/uPxYjz4pet22f7a9YVKqk7T+gFkWFwT9mEcrIUEg/xPrdOnWKLP9puXyYtm7oVfSDSefZ/p/w==
+>>>>>>> 72f587a674048b28ffcbace880b0b044da3da4d8
   dependencies:
     "@popperjs/core" "^2.9.2"
 
 "@vue/babel-helper-vue-jsx-merge-props@^1.0.0", "@vue/babel-helper-vue-jsx-merge-props@^1.2.1":
   version "1.2.1"
-  resolved "https://registry.npm.taobao.org/@vue/babel-helper-vue-jsx-merge-props/download/@vue/babel-helper-vue-jsx-merge-props-1.2.1.tgz?cache=0&sync_timestamp=1602851168919&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2F%40vue%2Fbabel-helper-vue-jsx-merge-props%2Fdownload%2F%40vue%2Fbabel-helper-vue-jsx-merge-props-1.2.1.tgz#31624a7a505fb14da1d58023725a4c5f270e6a81"
-  integrity sha1-MWJKelBfsU2h1YAjclpMXycOaoE=
+  resolved "https://registry.yarnpkg.com/@vue/babel-helper-vue-jsx-merge-props/-/babel-helper-vue-jsx-merge-props-1.2.1.tgz#31624a7a505fb14da1d58023725a4c5f270e6a81"
+  integrity sha512-QOi5OW45e2R20VygMSNhyQHvpdUwQZqGPc748JLGCYEy+yp8fNFNdbNIGAgZmi9e+2JHPd6i6idRuqivyicIkA==
 
 "@vue/babel-helper-vue-transform-on@^1.0.2":
   version "1.0.2"
@@ -8932,7 +8957,11 @@ validate-npm-package-license@^3.0.1:
     spdx-correct "^3.0.0"
     spdx-expression-parse "^3.0.0"
 
+<<<<<<< HEAD
 vant@^2.12.15:
+=======
+vant@2.12.15:
+>>>>>>> 72f587a674048b28ffcbace880b0b044da3da4d8
   version "2.12.15"
   resolved "https://registry.yarnpkg.com/vant/-/vant-2.12.15.tgz#f0dab821ec7f61a3a248259f54b1da1783438828"
   integrity sha512-WZ3csjbsqs8LhUFy0A2K9HdXDjZGKoHNYpSCEwO0aI1SzXbzXDi4WPItJXHU6OD/uBN/Scj0dcmI7KoIxgpk7g==
@@ -8996,8 +9025,13 @@ vue-hot-reload-api@^2.3.0:
 
 vue-lazyload@1.2.3:
   version "1.2.3"
+<<<<<<< HEAD
   resolved "https://registry.npm.taobao.org/vue-lazyload/download/vue-lazyload-1.2.3.tgz#901f9ec15c7e6ca78781a2bae4a343686bdedb2c"
   integrity sha1-kB+ewVx+bKeHgaK65KNDaGve2yw=
+=======
+  resolved "https://registry.yarnpkg.com/vue-lazyload/-/vue-lazyload-1.2.3.tgz#901f9ec15c7e6ca78781a2bae4a343686bdedb2c"
+  integrity sha512-DC0ZwxanbRhx79tlA3zY5OYJkH8FYp3WBAnAJbrcuoS8eye1P73rcgAZhyxFSPUluJUTelMB+i/+VkNU/qVm7g==
+>>>>>>> 72f587a674048b28ffcbace880b0b044da3da4d8
 
 "vue-loader-v16@npm:vue-loader@^16.1.0":
   version "16.2.0"
