@@ -9,6 +9,7 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "@authing/vue-ui-components": "^2.4.14",
     "@tinymce/tinymce-vue": "^3",
     "@types/dom-mediacapture-record": "^1.0.7",
     "@types/lodash": "^4.14.168",

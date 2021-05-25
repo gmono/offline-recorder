@@ -1,5 +1,6 @@
 <template>
   <div id="app">
+
     <!-- <g-widget>
       <h1 style="background:red" :data-draggable="true">helloworld</h1>
     </g-widget> -->
@@ -21,6 +22,7 @@
 <script>
 import GWidget from "./libcomponents/GWidget.vue";
 import SelectSource from "./components/SelectSource.vue";
+
 export default {
   components: { GWidget, SelectSource },
   name: "App",

@@ -36,7 +36,9 @@ import NewRecorder from "./components/NewRecorder.vue";
 //router
 Vue.use(VueRouter);
 import Center from "./components/Center.vue";
+import Login from "./components/Login.vue"
 const routes = [
+  {path:"/login",component:Login},
   { path: "/", component: Recorder },
   { path: "/center", component: Center },
   { path: "/new", component: NewRecorder }
