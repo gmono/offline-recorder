@@ -39,13 +39,13 @@ export interface IFIFO {
 
 export interface IBucket {
   //只放不能拿
-  push(blob: Blob): void;
+  push(blob: Blob): Promise<void>;
   /**
    * 获取桶中所有数据的URL（流式下载）
    */
-  getSequenceURL(): string;
+  getSequenceURL(): Promise<string>;
   /**
    * 内存中合并为一个大的blob并返回
    */
-  getConcatBlob(): Blob;
+  getConcatBlob(): Promise<Blob>;
 }

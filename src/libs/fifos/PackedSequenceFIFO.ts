@@ -1,6 +1,6 @@
 import { IFIFO, ISequence } from "../commom";
 
-class PackedArrayFIFO implements IFIFO{
+class PackedSequenceFIFO implements IFIFO{
   constructor(protected sequence: ISequence) {
     
   }
