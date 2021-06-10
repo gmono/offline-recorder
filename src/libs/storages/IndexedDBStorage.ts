@@ -10,7 +10,7 @@
  */
 
 import { createStore, get, set, UseStore,del } from "idb-keyval";
-import { error } from "ts-pystyle";
+
 import { IStorage } from "../commom";
 
 
