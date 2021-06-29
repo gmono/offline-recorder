@@ -1358,7 +1358,7 @@ export default {
 .recorder {
   border: #dcdfe6 solid 1px;
   width: 61.8%;
-  height: 500px;
+  /* height: 500px; */
   margin: auto;
 }
 @media screen and (max-width: 800px) {
