@@ -362,18 +362,18 @@
               </el-button>
               <!-- 笔记编辑部分 -->
               <!-- 笔记显示部分 -->
-              <div>
-                <ul>
+              <el-row style="padding:2rem">
+                <el-col :span="8" v-for="(item, idx) in recordingInfo.points"
+                    :key="item.time">
                   <el-button
+                  style="margin-bottom:1rem;margin-left:2rem"
                     @click="showRecordingPoint(idx)"
-                    type="text"
-                    v-for="(item, idx) in recordingInfo.points"
-                    :key="item.time"
+                    
                   >
                     {{ item.time }}
                   </el-button>
-                </ul>
-              </div>
+                </el-col>
+              </el-row>
             </el-row>
           </el-row>
           <!-- 输入回放部分 -->
