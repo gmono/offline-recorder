@@ -370,7 +370,7 @@
                     @click="showRecordingPoint(idx)"
                     
                   >
-                    {{ item.time }}
+                    {{ "title" in item.note? `笔记:${item.note.title}`:`标记点:${formatDate(item.time)}` }}
                   </el-button>
                 </el-col>
               </el-row>
@@ -892,6 +892,9 @@ export default {
         this.isNoteEditing = false;
       });
     },
+    /**
+    * 显示某个位置的笔记的内容
+     */
     showRecordingPoint(idx) {
       let item = this.recordingInfo.points[idx];
       this.$message(JSON.stringify(item));
