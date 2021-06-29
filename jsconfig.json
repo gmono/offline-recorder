@@ -2,6 +2,7 @@
     "compilerOptions": {
         "types": [
             "@types/dom-mediacapture-record"
-        ]   
-    }
+        ]   ,
+        "skipDefaultLibCheck": true
+    },
 }
