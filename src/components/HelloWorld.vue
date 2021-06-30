@@ -512,7 +512,13 @@ function newNote(type, data) {
     data,
   };
 }
-
+function getInitRecordingInfo(){
+  return {
+        recordType: "audio",
+        source: "",
+        points: [],
+      }
+}
 import ShowNote from "./ShowNote.vue"
 export default {
   components: { TimeLineNote, SelectSource,ShowNote },
@@ -1283,6 +1289,8 @@ export default {
         this.mergedBlob = null;
         this.blobs = [];
         this.nowRecordInfo = null;
+        //清除所有笔记 但不清除其他正在录制的信息
+        this.recordingInfo.points=[]
       }
     },
     loadNow(id, blob) {
