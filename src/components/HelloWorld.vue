@@ -1,7 +1,7 @@
 <template>
   <div class="hello">
     <div class="pcui" v-if="$mq == 'md' || $mq == 'lg'">
-      <el-dialog title="查看记录" :visible.sync="isShowingNote" @keypress.enter="isShowingNote=false">
+      <el-dialog fullscreen title="查看记录" :visible.sync="isShowingNote" @keypress.enter="isShowingNote=false">
         <show-note :data="nowShowedNote"></show-note>
         <el-divider></el-divider>
         <el-button type="primary" @click="isShowingNote=false">关闭</el-button>
