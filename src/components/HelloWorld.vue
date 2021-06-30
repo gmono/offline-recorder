@@ -1,6 +1,11 @@
 <template>
   <div class="hello">
     <div class="pcui" v-if="$mq == 'md' || $mq == 'lg'">
+      <el-dialog title="查看记录" :visible.sync="isShowingNote" @keypress.enter="isShowingNote=false">
+        <show-note :data="nowShowedNote"></show-note>
+        <el-divider></el-divider>
+        <el-button type="primary" @click="isShowingNote=false">关闭</el-button>
+      </el-dialog>
       <!-- <router-link to="/center">测试</router-link> -->
       <h1>离线录制</h1>
       <h4>一款直接在浏览器中运行的录音机，数据离线实时保存（尚未适配手机）</h4>
@@ -507,8 +512,10 @@ function newNote(type, data) {
     data,
   };
 }
+
+import ShowNote from "./ShowNote.vue"
 export default {
-  components: { TimeLineNote, SelectSource },
+  components: { TimeLineNote, SelectSource,ShowNote },
   name: "HelloWorld",
   props: {
     msg: String,
@@ -565,6 +572,12 @@ export default {
         title: "",
         desc: "",
       },
+      nowShowedNote:{
+        //point数据结构·
+        //正在显示的笔记
+      },
+      //控制
+      isShowingNote:false,
       noteContentVisible: false,
       isNoteEditing: false,
       //准备取消这个字段
@@ -898,6 +911,10 @@ export default {
     showRecordingPoint(idx) {
       let item = this.recordingInfo.points[idx];
       this.$message(JSON.stringify(item));
+      //显示对话框
+      this.nowShowedNote=item;
+      this.isShowingNote=true;
+
     },
     //
     play() {
