@@ -1,10 +1,17 @@
 <template>
   <div class="hello">
     <div class="pcui" v-if="$mq == 'md' || $mq == 'lg'">
-      <el-dialog fullscreen title="查看记录" :visible.sync="isShowingNote" @keypress.enter="isShowingNote=false">
+      <el-dialog
+        fullscreen
+        title="查看记录"
+        :visible.sync="isShowingNote"
+        @keypress.enter="isShowingNote = false"
+      >
         <show-note :data="nowShowedNote"></show-note>
         <el-divider></el-divider>
-        <el-button type="primary" @click="isShowingNote=false">关闭</el-button>
+        <el-button type="primary" @click="isShowingNote = false"
+          >关闭</el-button
+        >
       </el-dialog>
       <!-- <router-link to="/center">测试</router-link> -->
       <h1>离线录制</h1>
@@ -61,6 +68,11 @@
                     开始时间:{{ formatDate(nowRecordInfo["startTime"]) }}
                   </div>
                   <div>结束时间:{{ formatDate(nowRecordInfo["endTime"]) }}</div>
+                  <el-collapse>
+                    <el-collapse-item name="笔记列表" title="笔记列表">
+                      <note-list :points="nowRecordInfo.points"></note-list>
+                    </el-collapse-item>
+                  </el-collapse>
                 </el-card>
               </div>
               <!-- <div ref="player_container" style="height:100px;width:100%"></div> -->
@@ -367,15 +379,21 @@
               </el-button>
               <!-- 笔记编辑部分 -->
               <!-- 笔记显示部分 -->
-              <el-row style="padding:2rem">
-                <el-col :span="8" v-for="(item, idx) in recordingInfo.points"
-                    :key="item.time">
+              <el-row style="padding: 2rem">
+                <el-col
+                  :span="8"
+                  v-for="(item, idx) in recordingInfo.points"
+                  :key="item.time"
+                >
                   <el-button
-                  style="margin-bottom:1rem;margin-left:2rem"
+                    style="margin-bottom: 1rem; margin-left: 2rem"
                     @click="showRecordingPoint(idx)"
-                    
                   >
-                    {{ "title" in item.note? `笔记:${item.note.title}`:`标记点:${formatDate(item.time)}` }}
+                    {{
+                      "title" in item.note
+                        ? `笔记:${item.note.title}`
+                        : `标记点:${formatDate(item.time)}`
+                    }}
                   </el-button>
                 </el-col>
               </el-row>
@@ -398,7 +416,9 @@
         </van-col>
       </van-row>
       <van-row v-if="recorder == null">
-        <van-button @click="mobile_show_selectsource=true">当前设备尚未初始化，请选择媒体完成初始化</van-button>
+        <van-button @click="mobile_show_selectsource = true"
+          >当前设备尚未初始化，请选择媒体完成初始化</van-button
+        >
         <van-popup
           v-model="mobile_show_selectsource"
           closeable
@@ -452,7 +472,7 @@
           />
         </van-col>
       </van-row>
-    
+
       <van-cell-group>
         这里和pc不一样 这里可以点击并弹出笔记编辑页面
         <van-cell
@@ -512,16 +532,17 @@ function newNote(type, data) {
     data,
   };
 }
-function getInitRecordingInfo(){
+function getInitRecordingInfo() {
   return {
-        recordType: "audio",
-        source: "",
-        points: [],
-      }
+    recordType: "audio",
+    source: "",
+    points: [],
+  };
 }
-import ShowNote from "./ShowNote.vue"
+import ShowNote from "./ShowNote.vue";
+import NoteList from "./NoteList.vue"
 export default {
-  components: { TimeLineNote, SelectSource,ShowNote },
+  components: { TimeLineNote, SelectSource, ShowNote,NoteList },
   name: "HelloWorld",
   props: {
     msg: String,
@@ -578,12 +599,12 @@ export default {
         title: "",
         desc: "",
       },
-      nowShowedNote:{
+      nowShowedNote: {
         //point数据结构·
         //正在显示的笔记
       },
       //控制
-      isShowingNote:false,
+      isShowingNote: false,
       noteContentVisible: false,
       isNoteEditing: false,
       //准备取消这个字段
@@ -735,7 +756,7 @@ export default {
       let bit = 1500000;
       let res = await this.$prompt("输入总码率（单位Mbps ，推荐1.5）:");
       if (res.action == "confirm") {
-        bit = parseInt(res.value)*1000*1000;
+        bit = parseInt(res.value) * 1000 * 1000;
       }
       let recorder = new MediaRecorder(stream, {
         bitsPerSecond: bit,
@@ -758,7 +779,7 @@ export default {
       let bit = 128000;
       let res = await this.$prompt("输入音频码率（单位 kbps,推荐128）:");
       if (res.action == "confirm") {
-        bit = parseInt(res.value)*1000;
+        bit = parseInt(res.value) * 1000;
       }
       let recorder = new MediaRecorder(stream, {
         bitsPerSecond: bit,
@@ -912,15 +933,14 @@ export default {
       });
     },
     /**
-    * 显示某个位置的笔记的内容
+     * 显示某个位置的笔记的内容
      */
     showRecordingPoint(idx) {
       let item = this.recordingInfo.points[idx];
       this.$message(JSON.stringify(item));
       //显示对话框
-      this.nowShowedNote=item;
-      this.isShowingNote=true;
-
+      this.nowShowedNote = item;
+      this.isShowingNote = true;
     },
     //
     play() {
@@ -1290,7 +1310,7 @@ export default {
         this.blobs = [];
         this.nowRecordInfo = null;
         //清除所有笔记 但不清除其他正在录制的信息
-        this.recordingInfo.points=[]
+        this.recordingInfo.points = [];
       }
     },
     loadNow(id, blob) {
