@@ -18,24 +18,21 @@ export interface IStorage {
   updateBlock?(id: string, blob: Blob): Promise<void>;
 }
 /**
- * 数组接口
+ * 数组接口 可以自由访问和删除
  */
 export interface ISequence {
-  push(blob: Blob):Promise<void>;
+  pushToStart(blob: Blob): Promise<void>;
+  pushToEnd(blob: Blob): Promise<void>;
   get(idx: number):Promise<Blob>;
-  set(idx: number, blob: Blob):Promise<void>;
-  pop(): Promise<void>;
+  set(idx: number, blob: Blob): Promise<void>;
+  removeEnd(): Promise<void>;
+  removeStart(): Promise<void>;
+  //长度
+  length(): Promise<number>;
 }
 
 
-/**
- * 队列接口 一般队列基于数组
- */
-export interface IFIFO {
-  //队列
-  push(blob: Blob):Promise<void>;
-  pop(): Blob;
-}
+
 
 export interface IBucket {
   //只放不能拿
