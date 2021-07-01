@@ -903,6 +903,7 @@ export default {
         this.nowEditNote.desc = res.value;
         this.nowEditNote.content = res.value;
         this.addPoint(this.nowEditNote);
+        this.clearNowEditNote();
       } else {
         this.clearNowEditNote();
       }
@@ -937,7 +938,7 @@ export default {
      */
     showRecordingPoint(idx) {
       let item = this.recordingInfo.points[idx];
-      this.$message(JSON.stringify(item));
+      // this.$message(JSON.stringify(item));
       //显示对话框
       this.nowShowedNote = item;
       this.isShowingNote = true;

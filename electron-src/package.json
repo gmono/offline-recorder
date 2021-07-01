@@ -1,0 +1,8 @@
+{
+  "main": "./index.js",
+  "name": "recorder",
+  "version": "0.1",
+  "dependencies": {
+    "@types/electron": "^1.6.10"
+  }
+}

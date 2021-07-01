@@ -5,6 +5,6 @@
  */
  module.exports = {
     // 选项...
-    publicPath:"/offline-recorder/dist",
+    publicPath:"./",
     lintOnSave:false
   }
