@@ -9,7 +9,7 @@
  *    创建url时通过mediastream来创建，动态的添加data
  */
 
-import { createStore, get, set, UseStore,del } from "idb-keyval";
+import { createStore, get, set, UseStore,del ,clear,entries} from "idb-keyval";
 
 import { IStorage } from "../commom";
 
@@ -25,6 +25,14 @@ export class IndexedDBStorage implements IStorage {
   store: UseStore | null = null;
   constructor(name: string) {
     this.store = createStore(name, name)
+  }
+  async clear(): Promise<void> {
+    if (this.store == null) return;
+    await clear(this.store);
+  }
+  async count(): Promise<number> {
+    if (this.store == null) return 0;
+    return (await entries(this.store)).length
   }
   async hasBlock(id: string): Promise<boolean> {
     if (this.store)

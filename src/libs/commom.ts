@@ -22,6 +22,9 @@ export interface IStorage {
   hasBlock(id: string): Promise<boolean>;
   getBlock(id: string): Promise<Blob>;
   updateBlock?(id: string, blob: Blob): Promise<void>;
+  //总体操作函数
+  clear(): Promise<void>;
+  count(): Promise<number>;
 }
 /**
  * 数组接口 可以自由访问和删除

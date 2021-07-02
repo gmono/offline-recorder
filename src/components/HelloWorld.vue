@@ -522,6 +522,13 @@ const cacheStore = createStore(tempcache, tempcache);
 import { Notify } from "vant";
 //录制信息
 const recordingInfo = "recordingInfo";
+
+/**
+ * 引入新的storage
+ * 
+ */
+import {IndexedDBStorage} from "../libs/storages/IndexedDBStorage"
+const cachestorage=new IndexedDBStorage(tempcache)
 /**
  * 新建笔记
  */
