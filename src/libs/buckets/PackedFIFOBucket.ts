@@ -1,27 +1,35 @@
-import { IBucket, IFIFO } from "../commom";
+import { len } from "ts-pystyle";
+import { IBucket, ISequence } from "../commom";
 
-class PackedFIFOBucket implements IBucket{
-  constructor(protected fifo: IFIFO) {
-    
+
+export class PackedSequenceBucket implements IBucket {
+  constructor(protected seq: ISequence) {
+
   }
   async push(blob: Blob) {
-    await this.fifo.push(blob)
+    await this.seq.pushToStart(blob)
   }
   async getSequenceURL() {
     //使用媒体流创
-    let stream = new ReadableStream({
-      start() {
-        
-      },
-      pull() {
-        
+    let t = new MediaSource();
+    t.addEventListener("sourceopen", async (e) => {
+      let buffer = t.addSourceBuffer("video/webm")
+      let len = await this.seq.length();
+      //一次性放进去
+      for (let i = 0; i < len; ++i){
+        let item = await this.seq.get(i);
+        buffer.appendBuffer(await item.arrayBuffer())
       }
     })
-    let url=window.URL.createObjectURL(stream)
-
+    return URL.createObjectURL(t);
   }
   async getConcatBlob() {
-    return new Blob([])
+    let len = await this.seq.length();
+    let arr=[]
+    for (let i = 0; i < len; ++i){
+      arr.push(await this.seq.get(i))
+    }
+    return new Blob(arr)
   }
 
 }

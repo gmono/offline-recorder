@@ -8,6 +8,12 @@
  * 向两个方向包装
  * 1 支持更多数据类型 如 objectStorage 对象存储
  * 2 支持更多操作类型 如 FIFOStorage 存储队列
+ * 
+ * 
+ * 
+ * 三级体系 k-v 存储 storage
+ *         顺序存储 Sequence
+ *        
  */
 export interface IStorage {
   //存储器接口
