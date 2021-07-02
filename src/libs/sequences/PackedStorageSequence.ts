@@ -1,6 +1,6 @@
 import { ISequence, IStorage } from "../commom";
 
-class PackedStorageSequence implements ISequence{
+export class PackedStorageSequence implements ISequence{
   constructor(protected storage: IStorage) {
     
   }
