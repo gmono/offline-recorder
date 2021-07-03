@@ -12,6 +12,7 @@
     "@authing/vue-ui-components": "^2.4.14",
     "@ffmpeg/ffmpeg": "^0.10.1",
     "@tinymce/tinymce-vue": "^3",
+    "@types/crypto-js": "^4.0.1",
     "@types/dom-mediacapture-record": "^1.0.7",
     "@types/filesystem": "^0.0.30",
     "@types/lodash": "^4.14.168",

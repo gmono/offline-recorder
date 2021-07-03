@@ -517,6 +517,7 @@ import TimeLineNote from "./TimeLineNote.vue";
 import SelectSource, { getMedia, getMediaStream } from "./SelectSource.vue";
 import {KeyGenerator} from "../libs/login"
 const keygen=new KeyGenerator("gmono","gmono")
+//这是最后一个单纯的版本
 const historyKey = "historyBlobs";
 const infoMap = "historyBlobsInfoMap";
 const tempcache = "tempcache";
