@@ -25,6 +25,7 @@ export interface IStorage {
   //总体操作函数
   clear(): Promise<void>;
   count(): Promise<number>;
+  entities(): Promise<[string, Blob][]>;
 }
 /**
  * 数组接口 可以自由访问和删除

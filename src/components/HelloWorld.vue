@@ -515,10 +515,12 @@ import * as _ from "lodash";
 import downloadjs from "js-file-downloader";
 import TimeLineNote from "./TimeLineNote.vue";
 import SelectSource, { getMedia, getMediaStream } from "./SelectSource.vue";
+import {KeyGenerator} from "../libs/login"
+const keygen=new KeyGenerator("gmono","gmono")
 const historyKey = "historyBlobs";
 const infoMap = "historyBlobsInfoMap";
 const tempcache = "tempcache";
-const cacheStore = createStore(tempcache, tempcache);
+// const cacheStore = createStore(tempcache, tempcache);
 import { Notify } from "vant";
 //录制信息
 const recordingInfo = "recordingInfo";
@@ -858,7 +860,7 @@ export default {
       let res = await this.$confirm("是否要删除:" + info.name + "?");
       if (res == "confirm") {
         //如果是删除的当前的就自动清除当前
-        if (id == this.nowRecordInfo.id) {
+        if (this.nowRecordInfo!=null&&id == this.nowRecordInfo.id) {
           this.clearNow();
         }
         await this.removeItem(id);
@@ -1085,7 +1087,7 @@ export default {
     async addRecordFrame(frame) {
       //这里获取序号是同步执行 保证顺序
       let tid = this.blobs.length - 1;
-      await set(tid, frame, cacheStore); //保存到临时缓存
+      await cachestorage.pushBlock(tid.toString(),frame);
     },
     resume() {
       /**
@@ -1104,18 +1106,19 @@ export default {
       this.stateSwitch("paused");
     },
     async clearTempCache() {
-      await clear(cacheStore);
+      await cachestorage.clear()
+      // await clear(cacheStore);
       //
     },
     async tempCacheEmpty() {
       // return (await keys(cacheStore)).length == 0;
-      return (await get(0, cacheStore)) == undefined;
+      return (await cachestorage.getBlock(Number(0).toString())) == undefined;
     },
     /**
      * 加载临时缓存 数组 如果是空则返回[]
      */
     async loadTempCache() {
-      let ents = await entries(cacheStore);
+      let ents = await cachestorage.entities();
       ents = ents.sort((a, b) => {
         a[0] - b[0];
       });

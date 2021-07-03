@@ -26,6 +26,14 @@ export class IndexedDBStorage implements IStorage {
   constructor(name: string) {
     this.store = createStore(name, name)
   }
+  async entities(): Promise<[string, Blob][]> {
+    if (this.store == null) return [];
+    return (await entries(this.store)).map(v => {
+      if(v[1] instanceof Blob)
+        return [v[0].toString(), v[1]] as [string,Blob]
+      else throw new Error("错误，数据类型不是Blob")
+    })
+  }
   async clear(): Promise<void> {
     if (this.store == null) return;
     await clear(this.store);

@@ -19,6 +19,7 @@
     "@vuejs-community/vue-filter-date-format": "^1.6.3",
     "browserfs": "^1.4.3",
     "core-js": "^3.6.5",
+    "crypto-js": "^4.0.0",
     "dayjs": "^1.10.4",
     "element-ui": "^2.15.1",
     "filesize": "^6.1.0",
