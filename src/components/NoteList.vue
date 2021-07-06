@@ -12,7 +12,7 @@
       <el-button type="primary" @click="isShowingNote = false">关闭</el-button>
     </el-dialog>
     <el-row style="padding: 2rem">
-      <el-col :span="8" v-for="(item, idx) in points" :key="item.time">
+      <el-col :span="8" v-for="(item, idx) in points" :key="formatDate(item.time)">
         <el-button
           style="margin-bottom: 1rem; margin-left: 2rem"
           @click="showRecordingPoint(idx)"

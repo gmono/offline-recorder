@@ -383,7 +383,7 @@
                 <el-col
                   :span="8"
                   v-for="(item, idx) in recordingInfo.points"
-                  :key="item.time"
+                  :key="formatDate(item.time)"
                 >
                   <el-button
                     style="margin-bottom: 1rem; margin-left: 2rem"
@@ -480,7 +480,7 @@
           @click="mobile_editnote(idx)"
           :title="item.time.toString()"
           v-for="(item, idx) in recordingInfo.points"
-          :key="item.time"
+          :key="formatDate(item.time)"
         >
         </van-cell>
       </van-cell-group>
@@ -518,14 +518,14 @@ import SelectSource, { getMedia, getMediaStream } from "./SelectSource.vue";
 import {KeyGenerator} from "../libs/login"
 const keygen=new KeyGenerator("gmono","gmono")
 //这是最后一个单纯的版本
-const historyKey = "historyBlobs";
-const infoMap = "historyBlobsInfoMap";
-const tempcache = "tempcache";
+const historyKey = keygen.generate("historyBlobs");
+const infoMap = keygen.generate("historyBlobsInfoMap");
+const tempcache = keygen.generate("tempcache");
 // const cacheStore = createStore(tempcache, tempcache);
 import { Notify } from "vant";
 //录制信息
-const recordingInfo = "recordingInfo";
-
+const recordingInfo = keygen.generate("recordingInfo");
+debugger;
 /**
  * 引入新的storage
  * 
