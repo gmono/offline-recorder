@@ -531,7 +531,9 @@ const keygen = new KeyGenerator("gmono", "gmono");
 //这是最后一个单纯的版本
 const historyKey = keygen.generate("historyBlobs");
 const infoMap = keygen.generate("historyBlobsInfoMap");
-const tempcache = keygen.generate("tempcache");
+const tempcache = "tempcache";
+// const tempcache = keygen.generate("tempcache");
+console.log("缓存:", tempcache);
 // const cacheStore = createStore(tempcache, tempcache);
 import { Notify } from "vant";
 //录制信息
