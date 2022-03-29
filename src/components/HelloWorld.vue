@@ -309,6 +309,14 @@
             <el-row v-if="recorder == null">
               <h3>当前设备尚未初始化，请选择媒体完成初始化</h3>
             </el-row>
+            <div
+              style="margin-top:10px;margin-bottom:10px;display:flex;justifyContent:flex-end;margin-right:25px"
+            >
+              <el-button type="danger" @click="forceDownload">
+                紧急下载(下载缓存)
+              </el-button>
+            </div>
+
             <el-row v-if="recorder != null">
               <el-button
                 type="success"
@@ -517,7 +525,8 @@ import downloadjs from "js-file-downloader";
 import TimeLineNote from "./TimeLineNote.vue";
 import SelectSource, { getMedia, getMediaStream } from "./SelectSource.vue";
 import { KeyGenerator } from "../libs/login";
-
+import { v4 as uuid } from "uuid";
+import saver from "streamsaver";
 const keygen = new KeyGenerator("gmono", "gmono");
 //这是最后一个单纯的版本
 const historyKey = keygen.generate("historyBlobs");
@@ -609,6 +618,7 @@ export default {
   },
   data() {
     return {
+      forceDownload_process: 0,
       fs: new RecorderStore(),
       mobile_show_selectsource: false,
       active: "2",
@@ -727,6 +737,30 @@ export default {
     },
   },
   methods: {
+    /**
+     * 强制下载当前缓存内容 防止意外情况发生
+     */
+    async forceDownload() {
+      const fs = this.fs.fs.fs;
+      //写入临时文件
+      const fname = uuid();
+      const stream = saver.createWriteStream("forcedownload.webm");
+      const s = stream.getWriter();
+      // const s = fs.createWriteStream(fname, {
+      //   flags: "w",
+      // });
+      await this.$alert("紧急下载:" + fname);
+      const n = await cachestorage.count();
+      for (let i = 0; i < n; ++i) {
+        console.log(i);
+        await s.write(
+          this.fs.buffer.from(
+            await (await cachestorage.getBlock(i.toString())).arrayBuffer()
+          )
+        );
+      }
+      await s.close();
+    },
     // 可对接到fs 平滑过渡用
     async idbHas(key) {
       return (await keys()).includes(key);
