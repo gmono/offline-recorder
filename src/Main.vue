@@ -49,7 +49,8 @@ export default {
         // 在这里设置你使用的平台的 OAuth App 配置
         owner: "gmono",
         repo: "offline-recorder-comments",
-        ...developkeys,
+        // ...developkeys,
+        ...productkeys,
         // 只有在使用某些平台时需要
       },
     };
