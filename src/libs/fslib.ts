@@ -8,6 +8,7 @@ export class FSWrapper {
   }
 
   public async writeFile(name: string, data: Buffer) {
+    console.log("id:", name);
     return new Promise<void>((r, j) => {
       this.fs.writeFile(name, data, (res) => {
         if (res) j(res);
@@ -52,6 +53,44 @@ export class FSWrapper {
       });
     });
   }
+
+  public async readFile(name: string) {
+    return new Promise<Buffer | undefined>((r, j) => {
+      this.fs.readFile(name, (e, rv) => {
+        if (e) j(e);
+        r(rv);
+      });
+    });
+  }
+  /**
+   * 读取目录 得到文件列表
+   */
+  public async readdir(name: string) {
+    return new Promise<string[] | undefined>((r, j) => {
+      this.fs.readdir(name, (e, rv) => {
+        if (e) j(e);
+        r(rv);
+      });
+    });
+  }
+
+  public async unlink(name: string) {
+    return new Promise<void>((r, j) => {
+      this.fs.unlink(name, (e) => {
+        if (e) j(e);
+        r();
+      });
+    });
+  }
+
+  public async mkdir(name: string) {
+    return new Promise<void>((r, j) => {
+      this.fs.mkdir(name, (e) => {
+        if (e) j(e);
+        r();
+      });
+    });
+  }
   public createReadStream;
   public createWriteStram;
   //   public async createReadableStream<
@@ -74,6 +113,34 @@ export class RecorderStore {
     const buf = await blob.arrayBuffer();
     const buffer = this.buffer.from(buf);
     return this.fs.writeFile(name, buffer);
+  }
+  /**
+   *
+   * @param name 目录路径
+   * @returns 目录下的所有文件,完整路径
+   */
+  public async getAllFiles(name: string) {
+    return await this.fs.readdir(name);
+  }
+
+  public async ensureDir(name: string) {
+    if (await this.fs.exists(name)) {
+      return;
+    } else {
+      await this.fs.mkdir(name);
+    }
+  }
+  public async readFile(name: string) {
+    const r = await this.fs.readFile(name);
+    if (r) {
+      return new Blob([r.buffer]);
+    }
+    return null;
+  }
+  public async delFile(name: string) {
+    if (await this.fs.exists(name)) {
+      await this.fs.unlink(name);
+    }
   }
   public async downloadFile(name: string, downloadName: string) {
     //确保存在

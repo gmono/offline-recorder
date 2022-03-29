@@ -82,9 +82,10 @@ import * as brofs from "browserfs";
 
 brofs.install(window);
 // Configures BrowserFS to use the LocalStorage file system.
+//注意 切换文件系统会导致之前录制的看不到，但修改回来 就可以 数据不会丢失
 brofs.configure(
   {
-    fs: "LocalStorage",
+    fs: brofs.FileSystem.IndexedDB.Name,
     options: {},
   },
   function(e) {

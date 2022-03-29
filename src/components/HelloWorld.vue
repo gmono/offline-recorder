@@ -505,7 +505,7 @@
 //因此限制笔记长度为500字
 
 // import WFPlayer from "wfplayer"
-import { get, set, del, createStore, clear, entries } from "idb-keyval";
+import { get, keys, set, del, createStore, clear, entries } from "idb-keyval";
 import { delay, error, json } from "ts-pystyle";
 import filesize from "filesize";
 import store from "store2";
@@ -527,13 +527,15 @@ const tempcache = keygen.generate("tempcache");
 import { Notify } from "vant";
 //录制信息
 const recordingInfo = keygen.generate("recordingInfo");
-debugger;
+
 /**
  * 引入新的storage
  *
  */
 import { IndexedDBStorage } from "../libs/storages/IndexedDBStorage";
 const cachestorage = new IndexedDBStorage(tempcache);
+
+const recorddir = "record";
 /**
  * 新建笔记
  */
@@ -575,9 +577,12 @@ export default {
     //使用例子
     console.log(this.brofs);
     console.log(this.$mq);
-    try {
-      this.loading = true;
 
+    try {
+      //ensure record目录存在
+
+      this.loading = true;
+      await this.fs.ensureDir(recorddir);
       //loaddata indexs
       this.loadHistoryIdx();
       //加载上次的缓存
@@ -697,24 +702,58 @@ export default {
   },
   asyncComputed: {
     async playList() {
-      return await Promise.all(
-        this.historyBlobsIdx.map(async (v) => {
-          /**
-           * @type {Blob}
-           */
-          let b = await this.readHistoryItem(v);
-          return {
-            name: this.historyInfoMap[v].name,
-            id: v,
-            size: b.size,
-            length: this.historyInfoMap[v].length,
-            startTime: this.historyInfoMap[v].startTime,
-          };
-        })
-      );
+      console.log(this.historyBlobsIdx);
+      return (
+        await Promise.all(
+          this.historyBlobsIdx.map(async (v) => {
+            /**
+             * @type {Blob}
+             */
+            let b = await this.readHistoryItem(v);
+            //这里是如果遇到了无效的item
+            //本来应该执行询问和清除操作
+            if (!b) return undefined;
+            debugger;
+            return {
+              name: this.historyInfoMap[v].name,
+              id: v,
+              size: b.size,
+              length: this.historyInfoMap[v].length,
+              startTime: this.historyInfoMap[v].startTime,
+            };
+          })
+        )
+      ).filter((v) => v != undefined);
     },
   },
   methods: {
+    // 可对接到fs 平滑过渡用
+    async idbHas(key) {
+      return (await keys()).includes(key);
+    },
+    async get(key) {
+      let ret = await get(key);
+      if (ret == undefined) {
+        debugger;
+        const files = await this.fs.getAllFiles(recorddir);
+        let idx = files.indexOf(key);
+        if (idx == -1) return undefined;
+        const file = files[idx];
+        let blob = await this.fs.readFile(this.fs.path.join(recorddir, file));
+        return blob;
+      } else return ret;
+    },
+    async set(key, value) {
+      await this.fs.writeToFile(this.fs.path.join(recorddir, key), value);
+      // return await set(key, value);
+    },
+    async del(key) {
+      if (this.idbHas(key)) await del(key);
+      else {
+        //删除文件
+        await this.fs.delFile(this.fs.path.join(recorddir, key));
+      }
+    },
     //移动端
     mobile_editnote(idx) {
       //idx在points
@@ -1135,7 +1174,7 @@ export default {
       // console.log(ents)
       let ret = ents.map((v) => v[1]);
       // for (let a = 0; ; a++) {
-      //   let blob = await get(a, cacheStore);
+      //   let blob = await this.get(a, cacheStore);
       //   //如果undef 严格=
       //   if (blob === undefined) {
       //     break;
@@ -1177,18 +1216,24 @@ export default {
       await this.clearTempCache();
       //切换
       this.stateSwitch("stopped");
+      //id
+      let id = this.nowRecordInfo.id;
       //重命名
-      let res = await this.$prompt("请输入名称:", "命名录音", {
-        showCancelButton: false,
-        inputValue: this.nowRecordInfo.id,
-      });
-      if (res.action == "confirm") {
-        let id = this.nowRecordInfo.id;
-        await this.renameItem(this.nowRecordInfo.id, res.value);
-        this.loadNow(id, await this.readHistoryItem(id));
-      } else {
-        await this.$alert("错误");
-      }
+      try {
+        let res = await this.$prompt("请输入名称:", "命名录音", {
+          showCancelButton: false,
+          inputValue: id,
+          closeOnClickModal: false,
+          closeOnPressEscape: false,
+          closeOnHashChange: false,
+        });
+
+        if (res.action == "confirm") {
+          await this.renameItem(this.nowRecordInfo.id, res.value);
+          // this.loadNow(id, await this.readHistoryItem(id));
+        }
+      } catch (e) {}
+      this.loadNow(id, await this.readHistoryItem(id));
     },
     async download() {
       if (this.src != "") {
@@ -1350,6 +1395,9 @@ export default {
       //添加历史记录并存储
       await this.addItem(this.nowRecordInfo, this.mergedBlob);
     },
+    /**
+     * 唯一的 修改历史
+     */
     async addItem(info, blob) {
       this.historyBlobsIdx.push(info.id);
       store(historyKey, this.historyBlobsIdx);
@@ -1357,7 +1405,7 @@ export default {
       this.historyInfoMap[info.id] = info;
       store(infoMap, this.historyInfoMap);
       //对实际数据进行存储 自动添加前缀
-      await set(historyKey + info.id, blob);
+      await this.set(historyKey + info.id, blob);
     },
     /**
      * 加载历史索引表
@@ -1372,7 +1420,7 @@ export default {
       //删除数据
       // console.log(this.historyBlobsIdx);
       for (let a of this.historyBlobsIdx) {
-        await del(historyKey + a);
+        await this.del(historyKey + a);
       }
       store.remove(historyKey);
       store.remove(infoMap);
@@ -1383,7 +1431,7 @@ export default {
     /**
      * 从历史记录中读取一条记录 返回blob(merged)
      * @param {string} name
-     * @returns {Promise<Blob>}
+     * @returns {Promise<Blob>} 真正的数据
      */
     async readHistoryItem(name) {
       if (this.historyBlobsIdx.indexOf(name) == -1) {
@@ -1391,7 +1439,7 @@ export default {
         throw new Error("记录" + name + "不存在");
       }
       //读取
-      let res = await get(historyKey + name);
+      let res = await this.get(historyKey + name);
       return res;
     },
     async removeItem(name) {
@@ -1402,7 +1450,7 @@ export default {
       store.set(infoMap, this.historyInfoMap);
       store.set(historyKey, this.historyBlobsIdx);
       //删除数据
-      await del(historyKey + name);
+      await this.del(historyKey + name);
     },
     /**
      * 重命名一个item
