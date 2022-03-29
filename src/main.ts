@@ -6,8 +6,8 @@ import "element-ui/lib/theme-chalk/index.css";
 Vue.config.productionTip = false;
 Vue.use(Elementui);
 
-import Vant from 'vant';
-import 'vant/lib/index.css';
+import Vant from "vant";
+import "vant/lib/index.css";
 
 Vue.use(Vant);
 
@@ -36,24 +36,24 @@ import NewRecorder from "./components/NewRecorder.vue";
 //router
 Vue.use(VueRouter);
 import Center from "./components/Center.vue";
-import Login from "./components/Login.vue"
+import Login from "./components/Login.vue";
 const routes = [
-  {path:"/login",component:Login},
+  { path: "/login", component: Login },
   { path: "/", component: Recorder },
   { path: "/center", component: Center },
-  { path: "/new", component: NewRecorder }
+  { path: "/new", component: NewRecorder },
 ];
 
 // 3. 创建 router 实例，然后传 `routes` 配置
 // 你还可以传别的配置参数, 不过先这么简单着吧。
 const router = new VueRouter({
-  routes // (缩写) 相当于 routes: routes
+  routes, // (缩写) 相当于 routes: routes
 });
 
 // Or you can specify any other name and use it via this.$ls, this.$whatEverYouWant
 Vue.use(VueLocalStorage, {
   name: "ls",
-  bind: true //created computed members from your variable declarations
+  bind: true, //created computed members from your variable declarations
 });
 
 import mavonEditor from "mavon-editor";
@@ -63,22 +63,42 @@ Vue.use(mavonEditor);
 
 import VueMq from "vue-mq";
 
+import VueI18n from "vue-i18n";
+
+Vue.use(VueI18n);
 Vue.use(VueMq, {
   breakpoints: {
     // default breakpoints - customize this
     sm: 450,
     md: 950,
-    lg: Infinity
+    lg: Infinity,
   },
-  defaultBreakpoint: "sm" // customize this for SSR
+  defaultBreakpoint: "sm", // customize this for SSR
 });
 
-const ele = document.createElement("div");
-document.body.append(ele);
-new Vue({
-  render: (h) => h(App),
-  // render:h=>h("div",["helloworld"]),
-  store,
-  router,
-  el: ele
-});
+const ele = document.getElementById("cont");
+
+import * as brofs from "browserfs";
+
+brofs.install(window);
+// Configures BrowserFS to use the LocalStorage file system.
+brofs.configure(
+  {
+    fs: "LocalStorage",
+    options: {},
+  },
+  function(e) {
+    if (e) {
+      // An error happened!
+      throw e;
+    }
+    // Otherwise, BrowserFS is ready-to-use!
+    new Vue({
+      render: (h) => h(App),
+      // render:h=>h("div",["helloworld"]),
+      store,
+      router,
+      el: ele,
+    });
+  }
+);

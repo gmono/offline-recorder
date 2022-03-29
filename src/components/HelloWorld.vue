@@ -513,10 +513,12 @@ import jszip from "jszip";
 import dayjs from "dayjs";
 import * as _ from "lodash";
 import downloadjs from "js-file-downloader";
+
 import TimeLineNote from "./TimeLineNote.vue";
 import SelectSource, { getMedia, getMediaStream } from "./SelectSource.vue";
-import {KeyGenerator} from "../libs/login"
-const keygen=new KeyGenerator("gmono","gmono")
+import { KeyGenerator } from "../libs/login";
+
+const keygen = new KeyGenerator("gmono", "gmono");
 //这是最后一个单纯的版本
 const historyKey = keygen.generate("historyBlobs");
 const infoMap = keygen.generate("historyBlobsInfoMap");
@@ -528,10 +530,10 @@ const recordingInfo = keygen.generate("recordingInfo");
 debugger;
 /**
  * 引入新的storage
- * 
+ *
  */
-import {IndexedDBStorage} from "../libs/storages/IndexedDBStorage"
-const cachestorage=new IndexedDBStorage(tempcache)
+import { IndexedDBStorage } from "../libs/storages/IndexedDBStorage";
+const cachestorage = new IndexedDBStorage(tempcache);
 /**
  * 新建笔记
  */
@@ -550,9 +552,10 @@ function getInitRecordingInfo() {
   };
 }
 import ShowNote from "./ShowNote.vue";
-import NoteList from "./NoteList.vue"
+import NoteList from "./NoteList.vue";
+import { RecorderStore } from "@/libs/fslib";
 export default {
-  components: { TimeLineNote, SelectSource, ShowNote,NoteList },
+  components: { TimeLineNote, SelectSource, ShowNote, NoteList },
   name: "HelloWorld",
   props: {
     msg: String,
@@ -569,6 +572,11 @@ export default {
     },
   },
   async mounted() {
+    //使用例子
+    await this.fs.writeToFile("test", new Blob(["helloworld"]));
+    await this.fs.downloadFile("test.txt");
+    debugger;
+    console.log(this.brofs);
     console.log(this.$mq);
     try {
       this.loading = true;
@@ -599,6 +607,7 @@ export default {
   },
   data() {
     return {
+      fs: new RecorderStore(),
       mobile_show_selectsource: false,
       active: "2",
       selectMediaValue: "mic",
@@ -839,7 +848,10 @@ export default {
       return dayjs(d).format("YYYY-MM-DD HH:mm:ss");
     },
     secondToTime(i) {
-      return dayjs(0).second(i).subtract(8, "hours").format("HH:mm:ss");
+      return dayjs(0)
+        .second(i)
+        .subtract(8, "hours")
+        .format("HH:mm:ss");
     },
     info_generate(name) {
       let text = [];
@@ -861,7 +873,7 @@ export default {
       let res = await this.$confirm("是否要删除:" + info.name + "?");
       if (res == "confirm") {
         //如果是删除的当前的就自动清除当前
-        if (this.nowRecordInfo!=null&&id == this.nowRecordInfo.id) {
+        if (this.nowRecordInfo != null && id == this.nowRecordInfo.id) {
           this.clearNow();
         }
         await this.removeItem(id);
@@ -1088,7 +1100,7 @@ export default {
     async addRecordFrame(frame) {
       //这里获取序号是同步执行 保证顺序
       let tid = this.blobs.length - 1;
-      await cachestorage.pushBlock(tid.toString(),frame);
+      await cachestorage.pushBlock(tid.toString(), frame);
     },
     resume() {
       /**
@@ -1107,7 +1119,7 @@ export default {
       this.stateSwitch("paused");
     },
     async clearTempCache() {
-      await cachestorage.clear()
+      await cachestorage.clear();
       // await clear(cacheStore);
       //
     },
