@@ -573,9 +573,6 @@ export default {
   },
   async mounted() {
     //使用例子
-    await this.fs.writeToFile("test", new Blob(["helloworld"]));
-    await this.fs.downloadFile("test.txt");
-    debugger;
     console.log(this.brofs);
     console.log(this.$mq);
     try {

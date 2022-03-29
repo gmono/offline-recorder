@@ -75,11 +75,11 @@ export class RecorderStore {
     const buffer = this.buffer.from(buf);
     return this.fs.writeFile(name, buffer);
   }
-  public async downloadFile(downloadName: string) {
+  public async downloadFile(name: string, downloadName: string) {
     //确保存在
-    if (await this.fs.exists(downloadName)) {
+    if (await this.fs.exists(name)) {
       //写入
-      const file = await this.fs.open(downloadName, "r");
+      const file = await this.fs.open(name, "r");
       if (file) {
         //创建文件的下载url
         const writestream = saver.createWriteStream(downloadName);
@@ -91,13 +91,13 @@ export class RecorderStore {
 
         const blksize = 1000;
         for (let i = 0; i < length; i += blksize) {
-          debugger;
           const end = Math.min(i + blksize, length);
           const l = end - i;
           const bytes = await this.fs.read(file, l, i);
           if (bytes == undefined) return false;
           await writer.write(bytes);
         }
+        await writer.close();
         //返回真
         return true;
       } else return false;
