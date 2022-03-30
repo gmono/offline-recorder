@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/4.3.1/workbox-sw.js");
 
 importScripts(
-  "precache-manifest.e1faa25adc74a6a20410289a311aa7eb.js"
+  "precache-manifest.612b7c550a35a10fc7a0534b711feba8.js"
 );
 
 workbox.core.setCacheNameDetails({prefix: "offline-recorder"});

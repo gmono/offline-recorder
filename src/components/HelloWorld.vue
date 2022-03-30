@@ -763,7 +763,11 @@ export default {
         }
       );
       const n = await cachestorage.count();
-      const msg = this.$message("下载进度:");
+      const msg = this.$message.info({
+        message: "下载进度:",
+        duration: 0,
+        showClose: false,
+      });
       for (let i = 0; i < n; ++i) {
         // console.log(i);
         this.forceDownload_process++;
