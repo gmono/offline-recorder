@@ -568,7 +568,7 @@ function getInitRecordingInfo() {
 }
 import ShowNote from "./ShowNote.vue";
 import NoteList from "./NoteList.vue";
-import { RecorderStore } from "@/libs/fslib";
+import { FileBlob, RecorderStore } from "@/libs/fslib";
 export default {
   components: { TimeLineNote, SelectSource, ShowNote, NoteList },
   name: "HelloWorld",
@@ -727,7 +727,6 @@ export default {
             //这里是如果遇到了无效的item
             //本来应该执行询问和清除操作
             if (!b) return undefined;
-            debugger;
             return {
               name: this.historyInfoMap[v].name,
               id: v,
@@ -764,6 +763,25 @@ export default {
           showConfirmButton: false,
         }
       );
+      //下载信息
+      let id = `record_${dayjs(this.startTime).format(
+        "YYYY-MM-DD hh:mm:ss"
+      )}_${dayjs(this.endTime).format("YYYY-MM-DD hh:mm:ss")}`;
+      const tempinfo = {
+        name: id,
+        id: id,
+        startTime: this.startTime,
+        endTime: this.endTime,
+        //暂时不赋值
+        timeSpanList: [],
+        length: this.blobs.length,
+        ...this.recordingInfo,
+      };
+      let infourl = URL.createObjectURL(new Blob([JSON.stringify(tempinfo)]));
+      await this.downloadUrl("forcedownload" + ".json", infourl);
+      URL.revokeObjectURL(infourl);
+
+      //下载数据
       const n = await cachestorage.count();
       const msg = this.$message.info({
         message: "下载进度:",
@@ -791,7 +809,6 @@ export default {
     async get(key) {
       let ret = await get(key);
       if (ret == undefined) {
-        debugger;
         const files = await this.fs.getAllFiles(recorddir);
         let idx = files.indexOf(key);
         if (idx == -1) return undefined;
@@ -828,7 +845,6 @@ export default {
       let n = await getMedia(this.selectMediaValue);
       if (n == null) error("此媒體源不可用");
       console.log(n);
-      debugger;
       if (this.selectMediaValue !== "" && n != null) this.setSource(n);
     },
     /**
@@ -1258,6 +1274,9 @@ export default {
         this.stopping = false;
       });
     },
+    /**
+     * 在点击停止之后立刻进行的操作 而不是点击保存
+     */
     async stop_after() {
       //停止并结束 结束时需要清空临时缓存器
       // this.recorder.stop();
@@ -1266,6 +1285,7 @@ export default {
       this.stateSwitch("merging");
       //mergeblobs
       // console.log(this.blobs);
+      //重要3步 融合数据到一个数据对象 加入到history列表中 清理缓存
       this.mergeBlobs(this.blobs);
       //加入历史
       this.pushToHistory();
@@ -1334,7 +1354,6 @@ export default {
         duration: 0,
         showClose: true,
       });
-      debugger;
       let zip = new jszip();
       let idxs = this.historyBlobsIdx;
       for (let idx of idxs) {
@@ -1407,6 +1426,7 @@ export default {
      * @param {Array<Blob>} blobs
      */
     mergeBlobs(blobs) {
+      //融合得到大数据体的过程
       let ablobs = new Blob(blobs, { type: "audio/webm" });
       this.src = URL.createObjectURL(ablobs);
       this.mergedBlob = ablobs;
@@ -1414,6 +1434,37 @@ export default {
       let id = `record_${dayjs(this.startTime).format(
         "YYYY-MM-DD hh:mm:ss"
       )}_${dayjs(this.endTime).format("YYYY-MM-DD hh:mm:ss")}`;
+      //测试
+      //这里添加写入到文件作为blob
+      // const _this = this;
+      // async function test() {
+      //   const rd = Math.random();
+      //   //写入文件流
+      //   await _this.fs.writeStream(
+      //     id + rd,
+      //     (async function*() {
+      //       //推送数据
+      //       for (let bl of blobs) {
+      //         //提交数据
+      //         yield bl;
+      //       }
+      //     })()
+      //   );
+      //   //测试下载
+      //   // await _this.fs.downloadFile(id + rd, "test.webm");
+
+      //   const ss = await _this.fs.getFileUrl(id + rd);
+      //   // const tt = await (await fetch(ss)).arrayBuffer();
+      //   const ele = document.createElement("video");
+      //   ele.controls = true;
+      //   // ele.srcObject = await _this.fs.getFileSource(id + rd);
+      //   ele.src = ss;
+      //   document.body.append(ele);
+      //   //测试创建url
+      //   console.log(ss);
+      // }
+      // test();
+      //设置当前信息
       this.nowRecordInfo = {
         name: id,
         id: id,
