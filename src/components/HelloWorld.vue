@@ -529,16 +529,18 @@ import { v4 as uuid } from "uuid";
 import saver from "streamsaver";
 const keygen = new KeyGenerator("gmono", "gmono");
 //这是最后一个单纯的版本
-const historyKey = keygen.generate("historyBlobs");
-const infoMap = keygen.generate("historyBlobsInfoMap");
+// const historyKey = keygen.generate("historyBlobs");
+// const infoMap = keygen.generate("historyBlobsInfoMap");
+const historyKey = "historyBlobs";
+const infoMap = "historyBlobsInfoMap";
 const tempcache = "tempcache";
 // const tempcache = keygen.generate("tempcache");
 console.log("缓存:", tempcache);
 // const cacheStore = createStore(tempcache, tempcache);
 import { Notify } from "vant";
 //录制信息
-const recordingInfo = keygen.generate("recordingInfo");
-
+// const recordingInfo = keygen.generate("recordingInfo");
+const recordingInfo = "recordingInfo";
 /**
  * 引入新的storage
  *
