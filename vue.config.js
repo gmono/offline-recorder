@@ -8,4 +8,5 @@ module.exports = {
   publicPath: "./",
   lintOnSave: false,
   parallel: true,
+  productionSourceMap: false,
 };
