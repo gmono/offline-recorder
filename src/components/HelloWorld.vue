@@ -751,17 +751,32 @@ export default {
       // const s = fs.createWriteStream(fname, {
       //   flags: "w",
       // });
-      await this.$alert("紧急下载:" + fname);
+      this.$alert(
+        "紧急下载:" + fname + "不可取消，如需要录制新的请刷新页面或重新打开",
+        {
+          closeOnClickModal: false,
+          closeOnPressEscape: false,
+          closeOnHashChange: false,
+          showCancelButton: false,
+          showClose: false,
+          showConfirmButton: false,
+        }
+      );
       const n = await cachestorage.count();
+      const msg = this.$message("下载进度:");
       for (let i = 0; i < n; ++i) {
-        console.log(i);
+        // console.log(i);
+        this.forceDownload_process++;
         await s.write(
           this.fs.buffer.from(
             await (await cachestorage.getBlock(i.toString())).arrayBuffer()
           )
         );
+        if (n < 1000 || i % Math.max(0, (n / 1000) | 0) == 0)
+          msg.message = "下载进度:" + (i / n) * 100 + "%";
       }
       await s.close();
+      this.forceDownload_process = 0;
     },
     // 可对接到fs 平滑过渡用
     async idbHas(key) {
