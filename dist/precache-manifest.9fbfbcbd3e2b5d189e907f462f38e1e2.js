@@ -1,7 +1,7 @@
 self.__precacheManifest = (self.__precacheManifest || []).concat([
   {
-    "revision": "7eeb4d9efceefb74dc52",
-    "url": "css/app.59e522ea.css"
+    "revision": "b18b153cabdad13d7572",
+    "url": "css/app.06bf8221.css"
   },
   {
     "revision": "abd94b21d09041617f85",
@@ -36,19 +36,19 @@ self.__precacheManifest = (self.__precacheManifest || []).concat([
     "url": "img/fontello.9354499c.svg"
   },
   {
-    "revision": "5ac473e09ff07ffce8f1a22a5742ae33",
+    "revision": "b9d37987841dbcaa4f95d737debe5db1",
     "url": "index.html"
   },
   {
-    "revision": "7eeb4d9efceefb74dc52",
-    "url": "js/app.c179ce02.js"
+    "revision": "b18b153cabdad13d7572",
+    "url": "js/app.001cb5fd.js"
   },
   {
     "revision": "abd94b21d09041617f85",
     "url": "js/chunk-vendors.34921fb1.js"
   },
   {
-    "revision": "684b7839abd4f2ddf0d184241709f0ad",
+    "revision": "f502e3ee6ff545d5fd2bd7284996d252",
     "url": "manifest.json"
   },
   {
