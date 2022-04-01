@@ -1704,4 +1704,7 @@ export default {
     width: 100%;
   }
 }
+* {
+  user-select: none !important;
+}
 </style>
