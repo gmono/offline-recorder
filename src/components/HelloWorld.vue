@@ -14,8 +14,10 @@
         >
       </el-dialog>
       <!-- <router-link to="/center">测试</router-link> -->
-      <h1>离线录制</h1>
-      <h4>一款直接在浏览器中运行的录音机，数据离线实时保存（尚未适配手机）</h4>
+      <h1>安全记录器</h1>
+      <h4>
+        一款直接在浏览器中运行的录制与记录工具，数据离线实时保存（尚未适配手机）
+      </h4>
       <div class="inner-card">
         <el-collapse v-model="active" accordion>
           <el-collapse-item name="1">
@@ -38,7 +40,7 @@
               <div style="padding-left: 2rem">注意事项</div>
             </template>
             <h3>
-              切记本录音机不能在同一浏览器上同时打开两个，否则会造成存储混乱，对数据产生不可预测破坏
+              本工具在目前不能在同一浏览器上同时打开两个，否则会造成存储混乱，对数据产生不可预测破坏
             </h3>
             <h3>请勿清除浏览器记录，录音文件及时下载防止丢失</h3>
             <h3>
@@ -47,6 +49,9 @@
             <h3>
               请不要在一个录音中使用多个源（目前版本），例如如果录屏，就一直使用录屏的视频源，中断后继续时也一样，不要切换到摄像头
             </h3>
+            <h2>
+              注意，如果出现录制体积过大时间过长，导致合并迟迟不出结果，可以退出重开并使用紧急下载来保存数据并使用强制清空缓存来复位录制器状态
+            </h2>
           </el-collapse-item>
         </el-collapse>
       </div>
@@ -312,9 +317,25 @@
             <div
               style="margin-top:10px;margin-bottom:10px;display:flex;justifyContent:flex-end;margin-right:25px"
             >
-              <el-button type="danger" @click="forceDownload">
-                紧急下载(下载缓存)
-              </el-button>
+              <el-tooltip
+                effect="dark"
+                placement="top"
+                content="立刻开始下载当前正在录制的录音的缓存序列和信息文件，防止数据丢失"
+              >
+                <el-button type="danger" @click="forceDownload">
+                  紧急下载(下载缓存)
+                </el-button>
+              </el-tooltip>
+              <div style="width:25px"></div>
+              <el-tooltip
+                effect="dark"
+                placement="top"
+                content="立刻清理缓存队列，解决录音过大无法合并保存错误的问题，在此之前请先进行紧急下载"
+              >
+                <el-button type="danger" @click="forceClear">
+                  强制结束并清空缓存
+                </el-button>
+              </el-tooltip>
             </div>
 
             <el-row v-if="recorder != null">
@@ -600,7 +621,9 @@ export default {
       this.loadHistoryIdx();
       //加载上次的缓存
       //注意 切换媒体源当前尚未适配断点续录功能
-      if (!(await this.tempCacheEmpty())) {
+      const isempty = await this.tempCacheEmpty();
+      console.log(!isempty ? "继续录制" : "开始新的");
+      if (!isempty) {
         //此处已经必须知道之前选择的哪个媒体源了 或者至少知道是音频还是视频
         //获取信息并把source赋值给选择组件 然后从选择组件获取stream
         let info = await this.getTempRecordingInfo();
@@ -623,6 +646,8 @@ export default {
   data() {
     return {
       forceDownload_process: 0,
+      //表示是否保存过，如果没有 强制清除会被拒绝
+      alerady_saved: false,
       fs: new RecorderStore(),
       mobile_show_selectsource: false,
       active: "2",
@@ -652,6 +677,8 @@ export default {
         recordType: "audio",
         source: "",
         points: [],
+        //表示是否保存过，如果没有 强制清除会被拒绝
+        alerady_saved: false,
       },
       startTime: new Date(),
       endTime: new Date(),
@@ -694,6 +721,7 @@ export default {
       nowState: "normal",
       showPlayer: false,
       stopping: false,
+      //当前信息是否保存
     };
   },
   computed: {
@@ -740,11 +768,31 @@ export default {
     },
   },
   methods: {
+    async forceClear() {
+      //强制清空缓存并跳过合并阶段
+      //清空缓存 复位状态 清空当前信息 提示下载 如果没有下载过 拒绝清理
+      if (this.recordingInfo.alerady_saved == false) {
+        this.$message.warning(
+          "请先进行保存，点击停止按钮或强制保存按钮，等待过程结束才可以清除数据"
+        );
+        return;
+      }
+      this.recorder && this.recorder.stop();
+      await this.clearTempCache();
+      this.blobs = [];
+      this.stateSwitch("normal");
+      // this.clearNow();
+      this.recordingInfo = {
+        recordType: "audio",
+        source: "",
+        points: [],
+      };
+      this.nowRecordInfo = null;
+    },
     /**
      * 强制下载当前缓存内容 防止意外情况发生
      */
     async forceDownload() {
-      const fs = this.fs.fs.fs;
       //写入临时文件
       const fname = uuid();
       const stream = saver.createWriteStream("forcedownload.webm");
@@ -801,6 +849,9 @@ export default {
       }
       await s.close();
       this.forceDownload_process = 0;
+      //表示已经保存
+      this.recordingInfo.alerady_saved = true;
+      //
     },
     // 可对接到fs 平滑过渡用
     async idbHas(key) {
@@ -1158,6 +1209,8 @@ export default {
       //state
       await this.storeRecording();
       this.stateSwitch("recording");
+      //更改保存状态
+      this.recordingInfo.alerady_saved = false;
     },
     async getTempRecordingInfo() {
       let riinfo = await store.get(recordingInfo);
@@ -1173,20 +1226,26 @@ export default {
       this.startTime = riinfo["startTime"];
       this.endTime = riinfo["endTime"];
       this.recordingInfo.points = riinfo["points"];
+      this.recordingInfo.alerady_saved = riinfo["alerady_saved"];
       //这里要求recorder存在
       //下面這個過程要求媒體源必須已經設置好
       console.log(this.recorder);
       this.loading = true;
+      let aleradyswitch = false;
       this.$watch(
         "recorder",
-        () => {
+        async () => {
           //監聽到recorder可以了就直接進入暫停狀態
-          if (this.recorder) {
+          if (aleradyswitch) return;
+          aleradyswitch = true;
+          if (this.recorder && !(await this.tempCacheEmpty())) {
             this.recorder.start(1000);
             //state
             this.stateSwitch("recording");
             //暂停
             this.pause();
+            //保存状态
+            this.recordingInfo.alerady_saved = false;
           } else {
           }
           this.loading = false;
@@ -1476,6 +1535,9 @@ export default {
         ...this.recordingInfo,
       };
     },
+    /**
+     * 清除现在正在录制的信息
+     */
     clearNow() {
       if (this.src != null && this.src != "") {
         URL.revokeObjectURL(this.src);
@@ -1487,6 +1549,9 @@ export default {
         this.recordingInfo.points = [];
       }
     },
+    /**
+     * 加载指定id的记录作为当前记录
+     */
     loadNow(id, blob) {
       this.clearNow();
       this.mergedBlob = blob;
@@ -1504,7 +1569,9 @@ export default {
       await this.addItem(this.nowRecordInfo, this.mergedBlob);
     },
     /**
-     * 唯一的 修改历史
+     * 唯一的 添加数据修改历史记录的函数
+     * 在这里比对info和nowrecordinfo  如果是一样的 表示添加当前录制
+     * 那么就设置alerady saved为true
      */
     async addItem(info, blob) {
       this.historyBlobsIdx.push(info.id);
@@ -1514,6 +1581,10 @@ export default {
       store(infoMap, this.historyInfoMap);
       //对实际数据进行存储 自动添加前缀
       await this.set(historyKey + info.id, blob);
+      //
+      if (info.id == this.nowRecordInfo.id) {
+        this.recordingInfo.alerady_saved = true;
+      }
     },
     /**
      * 加载历史索引表

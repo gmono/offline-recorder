@@ -17,3 +17,7 @@ https://github.com/goldvideo/h265player/blob/master/src/loader/HLSLoader.js
 2. 消除 mergeblob 的作用,让 src 指向另一个
    创建 Fileblob url 成功，尝试从中下载数据
 3. 删除之前的代码并保持兼容
+4. 公开对外接口： 列表 缓存队列
+5. 改进缓存队列，使用 fslib 的文件写入功能实现缓存，并优化缓存队列的读写性能，添加一次获取多个 block 的功能
+6. 添加新类型笔记：任务，并可以点击完成
+7. 改进笔记功能，笔记数据类型改为 any，并允许 NoteLabel NoteView NoteTypeID 一一对应，允许插件化添加不同笔记功能

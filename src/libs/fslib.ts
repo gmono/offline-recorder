@@ -212,7 +212,7 @@ export class RecorderStore {
    * @param fd 文件
    * @returns 媒体元
    */
-  private async useFileAsSource(fd: number) {
+  private async useFileAsMediaSource(fd: number) {
     //
     const info = await this.fs.fstat(fd);
     if (info == undefined) return null;
@@ -222,9 +222,7 @@ export class RecorderStore {
     source.addEventListener("sourceopen", async (e) => {
       //开始读取数据
       console.log("sourceopen");
-      const buffer = source.addSourceBuffer(
-        'video/mp4; codecs="avc1.42E01E, mp4a.40.2"'
-      );
+      const buffer = source.addSourceBuffer("audio/webm; codecs:opus");
       buffer.mode = "sequence";
       buffer.addEventListener("updateend", (e) => {
         //结束
@@ -247,10 +245,10 @@ export class RecorderStore {
     return source;
   }
 
-  public async getFileSource(file: string) {
+  public async getFileMediaSource(file: string) {
     const fd = await this.fs.open(file, "r");
     if (fd == undefined) throw new Error("打开文件失败");
-    const source = await this.useFileAsSource(fd);
+    const source = await this.useFileAsMediaSource(fd);
     if (source == null) throw new Error("获取source失败");
     source.addEventListener("sourceended", async (e) => {
       await this.fs.close(fd);
@@ -262,8 +260,8 @@ export class RecorderStore {
    * @param fd 文件
    * @returns 文件url
    */
-  public async getFileUrl(file: string) {
-    return URL.createObjectURL(await this.getFileSource(file));
+  public async getFilePlayingUrl(file: string) {
+    return URL.createObjectURL(await this.getFileMediaSource(file));
   }
   public async downloadFile(name: string, downloadName: string) {
     //确保存在
