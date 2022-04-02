@@ -311,9 +311,6 @@
         @click="recordAudio"
         >音频录制</el-button
       > -->
-            <el-row v-if="recorder == null">
-              <h3>当前设备尚未初始化，请选择媒体完成初始化</h3>
-            </el-row>
             <div
               style="margin-top:10px;margin-bottom:10px;display:flex;justifyContent:flex-end;margin-right:25px"
             >
@@ -337,6 +334,9 @@
                 </el-button>
               </el-tooltip>
             </div>
+            <el-row v-if="recorder == null">
+              <h3>当前设备尚未初始化，请选择媒体完成初始化</h3>
+            </el-row>
 
             <el-row v-if="recorder != null">
               <el-button
@@ -408,14 +408,15 @@
               </el-button>
               <!-- 笔记编辑部分 -->
               <!-- 笔记显示部分 -->
-              <el-row style="padding: 2rem">
-                <el-col
-                  :span="8"
+              <div
+                style="padding: 2rem;display:flex;flex-direction:row;flex-wrap:wrap;justify-content:space-around"
+              >
+                <div
                   v-for="(item, idx) in recordingInfo.points"
                   :key="formatDate(item.time)"
                 >
                   <el-button
-                    style="margin-bottom: 1rem; margin-left: 2rem"
+                    style="margin-bottom: 1rem;"
                     @click="showRecordingPoint(idx)"
                   >
                     {{
@@ -424,8 +425,8 @@
                         : `标记点:${formatDate(item.time)}`
                     }}
                   </el-button>
-                </el-col>
-              </el-row>
+                </div>
+              </div>
             </el-row>
           </el-row>
           <!-- 输入回放部分 -->
@@ -589,6 +590,7 @@ function getInitRecordingInfo() {
 }
 import ShowNote from "./ShowNote.vue";
 import NoteList from "./NoteList.vue";
+import fastq, * as queue from "fastq";
 import { FileBlob, RecorderStore } from "@/libs/fslib";
 export default {
   components: { TimeLineNote, SelectSource, ShowNote, NoteList },
@@ -836,6 +838,14 @@ export default {
         duration: 0,
         showClose: false,
       });
+      const queue = new fastq();
+      const cache = new Array(100000);
+      let readok = false;
+      const writer = async () => {
+        //循环写入 一次合并一千个
+        const batchsize = 1000;
+      };
+      const reader = async () => {};
       for (let i = 0; i < n; ++i) {
         // console.log(i);
         this.forceDownload_process++;
