@@ -876,7 +876,7 @@ export default {
         while (writeend < n) {
           const batchsize = Math.min(1000, n - writeend);
           const tempcache = new Array(batchsize);
-          console.log("写入批次" + batchsize);
+          // console.log("写入批次" + batchsize);
           for (let i of range(batchsize)) {
             tempcache[i] = cachestorage
               .getBlock(i.toString())
@@ -893,7 +893,7 @@ export default {
             cache[writeend % size] = v;
             writeend++;
             //输出
-            console.log("写入位置" + writeend);
+            // console.log("写入位置" + writeend);
           });
         }
 
@@ -908,7 +908,7 @@ export default {
             //写入
             for (let i of range(len(writedata))) {
               await s.write(writedata[i]);
-              console.log("读取位置" + i);
+              // console.log("读取位置" + i);
               //报告进度
               this.forceDownload_process++;
               if (n < 100 || readstart % Math.max(0, (n / 100) | 0) == 0)
