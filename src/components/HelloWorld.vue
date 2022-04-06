@@ -297,7 +297,10 @@
           <el-divider></el-divider>
           <!-- 控制器区域 -->
           <el-row>
-            <h2>当前录制:{{ recordTime }}</h2>
+            <div>
+              <h2>当前录制:{{ recordTime }}</h2>
+              <h4>当前大小:{{ sizeDesc }}</h4>
+            </div>
 
             <!-- <el-button
         type="primary"
@@ -406,6 +409,8 @@
               >
                 添加记录点
               </el-button>
+            </el-row>
+            <el-row>
               <!-- 笔记编辑部分 -->
               <!-- 笔记显示部分 -->
               <div
@@ -536,14 +541,14 @@
 
 // import WFPlayer from "wfplayer"
 import { get, keys, set, del, createStore, clear, entries } from "idb-keyval";
-import { delay, error, json } from "ts-pystyle";
+import { delay, error, json, len, range } from "ts-pystyle";
 import filesize from "filesize";
 import store from "store2";
 import jszip from "jszip";
 import dayjs from "dayjs";
 import * as _ from "lodash";
 import downloadjs from "js-file-downloader";
-
+import { getDescriptOfSize2, waitFor } from "../lib";
 import TimeLineNote from "./TimeLineNote.vue";
 import SelectSource, { getMedia, getMediaStream } from "./SelectSource.vue";
 import { KeyGenerator } from "../libs/login";
@@ -636,13 +641,14 @@ export default {
         });
       } else {
         //没有缓存直接初始化
+        this.selectMediaValue = "mic";
         await this.initRecorder();
       }
       this.loading = false;
     } catch (e) {
       //显示错误
       this.loading = false;
-      this.$message.error("获取媒体设备错误");
+      this.$message.error("获取媒体设备错误:" + e);
     }
   },
   data() {
@@ -681,6 +687,7 @@ export default {
         points: [],
         //表示是否保存过，如果没有 强制清除会被拒绝
         alerady_saved: false,
+        size: 0,
       },
       startTime: new Date(),
       endTime: new Date(),
@@ -727,6 +734,13 @@ export default {
     };
   },
   computed: {
+    sizeDesc() {
+      return getDescriptOfSize2(
+        this.recordingInfo.size,
+        ["byte", "KB", "MB", "GB"],
+        [1024, 1024, 1024]
+      );
+    },
     recordTime() {
       return dayjs(0)
         .second(this.blobs.length)
@@ -779,7 +793,9 @@ export default {
         );
         return;
       }
-      this.recorder && this.recorder.stop();
+      this.recorder &&
+        this.recorder.state != "inactive" &&
+        this.recorder.stop();
       await this.clearTempCache();
       this.blobs = [];
       this.stateSwitch("normal");
@@ -788,6 +804,7 @@ export default {
         recordType: "audio",
         source: "",
         points: [],
+        size: 0,
       };
       this.nowRecordInfo = null;
     },
@@ -795,6 +812,10 @@ export default {
      * 强制下载当前缓存内容 防止意外情况发生
      */
     async forceDownload() {
+      if (this.nowState == "recording") {
+        this.$message.warning("请先暂停或停止录制再进行下载");
+        return;
+      }
       //写入临时文件
       const fname = uuid();
       const stream = saver.createWriteStream("forcedownload.webm");
@@ -838,29 +859,83 @@ export default {
         duration: 0,
         showClose: false,
       });
-      const queue = new fastq();
-      const cache = new Array(100000);
+      const size = 100000;
+      /**
+       * @type {Buffer[]}
+       */
+      const cache = new Array(size);
       let readok = false;
+      let readstart = 0;
+      let writeend = 0;
+      /**
+       * 写入循环
+       */
       const writer = async () => {
         //循环写入 一次合并一千个
-        const batchsize = 1000;
+        //一直到
+        while (writeend < n) {
+          const batchsize = Math.min(1000, n - writeend);
+          const tempcache = new Array(batchsize);
+          console.log("写入批次" + batchsize);
+          for (let i of range(batchsize)) {
+            tempcache[i] = cachestorage
+              .getBlock(i.toString())
+              .then((v) => v.arrayBuffer());
+          }
+          /**
+           * @type {ArrayBuffer[]}
+           */
+          const arrayBuffers = await Promise.all(tempcache);
+          //转换
+          const buffers = arrayBuffers.map((v) => this.fs.buffer.from(v));
+          //存储到缓存中
+          buffers.forEach((v) => {
+            cache[writeend % size] = v;
+            writeend++;
+            //输出
+            console.log("写入位置" + writeend);
+          });
+        }
+
+        //
       };
-      const reader = async () => {};
-      for (let i = 0; i < n; ++i) {
-        // console.log(i);
-        this.forceDownload_process++;
-        await s.write(
-          this.fs.buffer.from(
-            await (await cachestorage.getBlock(i.toString())).arrayBuffer()
-          )
-        );
-        if (n < 1000 || i % Math.max(0, (n / 1000) | 0) == 0)
-          msg.message = "下载进度:" + (i / n) * 100 + "%";
-      }
+      const reader = async () => {
+        while (readstart < n) {
+          if (readstart < writeend) {
+            //要写入的数据
+            const writedata = cache.slice(readstart % size, writeend % size);
+            readstart = writeend;
+            //写入
+            for (let i of range(len(writedata))) {
+              await s.write(writedata[i]);
+              console.log("读取位置" + i);
+              //报告进度
+              this.forceDownload_process++;
+              if (n < 100 || readstart % Math.max(0, (n / 100) | 0) == 0)
+                msg.message = "下载进度:" + (readstart / n) * 100 + "%";
+            }
+          } else await delay(0);
+        }
+      };
+      //启动并等待结束
+      await Promise.all([reader(), writer()]);
+      // for (let i = 0; i < n; ++i) {
+      //   // console.log(i);
+      //   this.forceDownload_process++;
+      //   await s.write(
+      //     this.fs.buffer.from(
+      //       await (await cachestorage.getBlock(i.toString())).arrayBuffer()
+      //     )
+      //   );
+
+      // }
       await s.close();
       this.forceDownload_process = 0;
       //表示已经保存
       this.recordingInfo.alerady_saved = true;
+      //保存录制信息
+      await this.storeRecording();
+      msg.message = "下载完成";
       //
     },
     // 可对接到fs 平滑过渡用
@@ -957,6 +1032,10 @@ export default {
       //建立回放
       // this.videoStreamUrl=URL.createObjectURL(source);
     },
+    /**
+     * 如果提供了mediastream
+     * 就直接使用 否则以mic为source
+     */
     async initRecorder(stream_p) {
       let stream =
         stream_p ||
@@ -1185,6 +1264,7 @@ export default {
       this.nowState = state;
     },
     /**
+     * 接受录音数据的函数
      * @param {BlobEvent} d
      */
     async dataavailable(d) {
@@ -1198,6 +1278,11 @@ export default {
       }
       this.blobs.push(d.data);
       this.endTime = new Date();
+      this.recordingInfo.size += d.data.size;
+      //收到数据就更新recordinginfo
+      this.recordingInfo.alerady_saved = false;
+      await this.storeRecording();
+      //每次收到数据都更改这个状态
       console.log(d);
       //自动保存
       // let tid=this.formatDate(new Date());
@@ -1217,10 +1302,12 @@ export default {
       this.endTime = new Date();
       this.recorder.start(1000);
       //state
-      await this.storeRecording();
+      //clear当前大小
+      // this.recordingInfo.size = 0;
+      // await this.storeRecording();
       this.stateSwitch("recording");
       //更改保存状态
-      this.recordingInfo.alerady_saved = false;
+      // this.recordingInfo.alerady_saved = false;
     },
     async getTempRecordingInfo() {
       let riinfo = await store.get(recordingInfo);
@@ -1232,11 +1319,12 @@ export default {
       // console.log(this.blobs);
       //加载上次保存的录制信息 开始和结束时间
       let riinfo = await store.get(recordingInfo);
-
+      Object.assign(this.recordingInfo, riinfo);
       this.startTime = riinfo["startTime"];
       this.endTime = riinfo["endTime"];
-      this.recordingInfo.points = riinfo["points"];
-      this.recordingInfo.alerady_saved = riinfo["alerady_saved"];
+      // this.recordingInfo.points = riinfo["points"];
+      // this.recordingInfo.alerady_saved = riinfo["alerady_saved"];
+      // this.recordingInfo.size=riinfo[""]
       //这里要求recorder存在
       //下面這個過程要求媒體源必須已經設置好
       console.log(this.recorder);
@@ -1254,8 +1342,6 @@ export default {
             this.stateSwitch("recording");
             //暂停
             this.pause();
-            //保存状态
-            this.recordingInfo.alerady_saved = false;
           } else {
           }
           this.loading = false;
@@ -1265,6 +1351,10 @@ export default {
         }
       );
     },
+    /**
+     * 存储recordinginfo
+     *
+     */
     async storeRecording() {
       await store.set(recordingInfo, {
         startTime: this.startTime,
@@ -1303,7 +1393,8 @@ export default {
     },
     async tempCacheEmpty() {
       // return (await keys(cacheStore)).length == 0;
-      return (await cachestorage.getBlock(Number(0).toString())) == undefined;
+      return !cachestorage.hasBlock(Number(0).toString());
+      // return (await cachestorage.getBlock(Number(0).toString())) == undefined;
     },
     /**
      * 加载临时缓存 数组 如果是空则返回[]
