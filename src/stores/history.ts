@@ -16,7 +16,10 @@ async function itemNameList() {
  * @returns {{[idx:string]:ReturnType<typeof newRecordingInfo>}}
  */
 async function itemInfos() {
-    return await (await entries(itemInfoStore)).reduce((prev, curr) => (prev[curr[0]] = curr[1],prev), {})
+    return (await entries(itemInfoStore)).reduce((prev, curr) => {
+        prev[String(curr[0])] = curr[1];
+        return prev;
+    }, {} as Record<string, any>);
 }
 
 /**
@@ -55,12 +58,12 @@ export default () => ({
         //初始化获取数据 从store中
         //name->info
         isInited: false,
-        historyInfos: null
+        historyInfos: {}
     },
     getters: {
         //历史索引
         historyIdxs(state) {
-            return _.keys(state.historyInfos)
+            return _.keys(state.historyInfos || {})
         }
     },
     mutations: {
@@ -74,8 +77,7 @@ export default () => ({
             //只提交info 客户端获取blob应该通过导出的工具函数获取
             // state.historyInfos[info.id] = info;
             //由于不是用proxy实现 这里在object上添加新的key是不会被监听到的
-            state.historyInfos={...state.historyInfos,[info.id]:info}
-            alert(info)
+            state.historyInfos = { ...state.historyInfos, [info.id]: info };
         },
         initHistoryInfo(state, initinfos) {
             // if (state.isInited) console.warn("重复提交初始化更改")
@@ -83,11 +85,13 @@ export default () => ({
             state.historyInfos = _.cloneDeep(initinfos);
         },
         removeItem(state, id) {
-            if (context.state.isInited == false) {
+            if (state.isInited == false) {
                 error("错误，还没初始化");
             }
             if (id in state.historyInfos) {
-                delete state.historyInfos[id];
+                const nextInfos = { ...state.historyInfos };
+                delete nextInfos[id];
+                state.historyInfos = nextInfos;
             }
         },
         updateInfo(state, { id, newInfo }) {
@@ -96,7 +100,10 @@ export default () => ({
             }
             if (id != newInfo.id) error("不能更新Item的id，id不可更改")
             if (id in state.historyInfos) {
-                state.historyInfos[id] = newInfo;
+                state.historyInfos = {
+                    ...state.historyInfos,
+                    [id]: _.cloneDeep(newInfo),
+                };
             }
         }
     },
@@ -118,8 +125,12 @@ export default () => ({
             if (context.state.isInited == false) {
                 error("错误，还没初始化");
             }
-            const oldinfo = context.state.historyInfos[id];
+            const oldinfo = _.cloneDeep(context.state.historyInfos[id]);
+            if (!oldinfo) {
+                throw new Error("记录不存在");
+            }
             oldinfo.name = newName;
+            await updateInfo(id, oldinfo);
             context.commit("updateInfo", { id, newInfo: oldinfo });
         },
         async clearHistory(context) {
@@ -140,7 +151,7 @@ export default () => ({
             if (id in context.state.historyInfos) {
                 const info = context.state.historyInfos[id];
                 //blob
-                const blob = getItemBlob(id);
+                const blob = await getItemBlob(id);
                 if (info == null || blob == null) {
                     console.error("获取记录时出现错误，存在空记录");
                     return null;

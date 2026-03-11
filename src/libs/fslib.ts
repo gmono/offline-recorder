@@ -39,7 +39,7 @@ export class FSWrapper {
    */
   public async read(fd: number, length: number, pos: number) {
     return new Promise<Buffer | undefined>((r, j) => {
-      const buf = new Buffer(length);
+      const buf = Buffer.alloc(length);
       this.fs.read(fd, buf, 0, length, pos, (e, f, data) => {
         if (e) j(e);
         r(data);
@@ -334,8 +334,8 @@ export class FileBlob extends Blob {
     }
     throw new Error("文件未设定");
   }
-  async slice(start?: number, end?: number, contentType?: string): Blob {
-    throw new Error("Method not implemented.");
+  slice(start?: number, end?: number, contentType?: string): Blob {
+    return super.slice(start, end, contentType);
   }
   stream(): ReadableStream<ArrayBuffer> {
     const self = this;

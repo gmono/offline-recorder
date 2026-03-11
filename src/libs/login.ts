@@ -26,14 +26,14 @@ export class LoginManager{
   }
   //注册登录
   public async register(username:string,password:string) {
-    if (this.hasUser(username)) {
+    if (await this.hasUser(username)) {
       throw new Error("用户已存在");
     }
     else {
       //注册用户
       //生成校验码
       let raw = username;
-      let key=hash.sha256().update(password).digest()
+      let key = new Uint8Array(hash.sha256().update(password).digest())
       let enc = new ase.ModeOfOperation.ctr(key);
       let encdata = new Blob([enc.encrypt(ase.utils.utf8.toBytes(raw))]);
       //存储到用户列表 校验数据 到时候需要解密得到实际的用户名对比后才能确认成功
@@ -44,20 +44,20 @@ export class LoginManager{
     return new KeyGenerator(username, password);
   }
   public async  login(username:string,password:string) {
-    if (this.hasUser(username)) {
+    if (await this.hasUser(username)) {
       //获取校验数据 解密 对比
       let encdata =await this.userlist.getBlock(username);
-      let key = hash.sha256().update(password).digest()
+      let key = new Uint8Array(hash.sha256().update(password).digest())
       let enc = new ase.ModeOfOperation.ctr(key);
       try {
-        let raw = ase.utils.utf8.fromBytes(enc.decrypt(await encdata.arrayBuffer()))
+        let raw = ase.utils.utf8.fromBytes(enc.decrypt(new Uint8Array(await encdata.arrayBuffer())))
         if (raw == username) {
           return this.getKeyGen(username, password);
         } else throw new Error("密码错误")
       } catch (e) {
         throw new Error("密码错误");
       }
-    }else return new Error("不存在这个用户")
+    }else throw new Error("不存在这个用户")
   }
 }
 export class KeyGenerator{

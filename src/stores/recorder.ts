@@ -91,7 +91,11 @@ class Recorder {
             audio: true,
             video: false
         });
-        const recorder = new MediaRecorder(await media, {
+        const MediaRecorderCtor = (window as any).MediaRecorder;
+        if (!MediaRecorderCtor) {
+            throw new Error("当前浏览器不支持 MediaRecorder");
+        }
+        const recorder = new MediaRecorderCtor(await media, {
             bitsPerSecond: 128000,
             audioBitrateMode: "variable",
             mimeType: "audio/webm",

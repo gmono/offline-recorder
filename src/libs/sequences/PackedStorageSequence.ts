@@ -37,8 +37,10 @@ export class PackedStorageSequence implements ISequence{
   }
   async set(idx: number, blob: Blob): Promise<void> {
     idx=this.transformIDX(idx)
-    if(this.storage.updateBlock)
+    if(this.storage.updateBlock) {
       await this.storage.updateBlock(idx.toString(), blob);
+      return;
+    }
     throw new Error("存储器不支持覆写")
   }
   async removeEnd(): Promise<void> {

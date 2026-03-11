@@ -4,10 +4,11 @@
   "private": true,
   "description": "",
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
+    "serve": "node --openssl-legacy-provider ./node_modules/@vue/cli-service/bin/vue-cli-service.js serve",
+    "build": "node --openssl-legacy-provider ./node_modules/@vue/cli-service/bin/vue-cli-service.js build",
     "lint": "vue-cli-service lint"
   },
+  "packageManager": "pnpm@10.27.0",
   "dependencies": {
     "@authing/vue-ui-components": "^2.4.14",
     "@ffmpeg/ffmpeg": "^0.10.1",
@@ -27,7 +28,6 @@
     "core-js": "^3.6.5",
     "crypto-js": "^4.0.0",
     "dayjs": "^1.10.4",
-    "element-ui": "^2.15.1",
     "fastq": "^1.13.0",
     "filesize": "^6.1.0",
     "hash.js": "^1.1.7",
@@ -37,16 +37,18 @@
     "lodash": "^4.17.21",
     "lzma": "^2.3.2",
     "mavon-editor": "^2.9.1",
+    "qrcode": "^1.5.4",
+    "regenerator-runtime": "^0.14.1",
     "register-service-worker": "^1.7.1",
     "rxjs": "^6.6.7",
     "sass-loader": "^12.6.0",
     "store2": "^2.12.0",
     "streamsaver": "^2.0.6",
     "ts-pystyle": "^1.4.4",
+    "tslib": "^2.8.1",
     "uuid": "^8.3.2",
-    "vant": "^2.12.15",
     "vssue": "^1.4.8",
-    "vue": "^2.6.11",
+    "vue": "2.6.14",
     "vue-async-computed": "^3.9.0",
     "vue-class-component": "^7.2.6",
     "vue-i18n": "^8.27.1",
@@ -61,8 +63,13 @@
     "wfplayer": "^1.1.4"
   },
   "devDependencies": {
+    "@types/node": "^14.18.63",
+    "@types/webpack-env": "^1.18.8",
     "@typescript-eslint/eslint-plugin": "^4.18.0",
     "@typescript-eslint/parser": "^4.18.0",
+    "@unocss/postcss": "^66.5.1",
+    "@unocss/preset-attributify": "^66.5.1",
+    "@unocss/preset-uno": "^66.5.1",
     "@vue/cli-plugin-babel": "~4.5.0",
     "@vue/cli-plugin-eslint": "~4.5.0",
     "@vue/cli-plugin-pwa": "~4.5.0",
@@ -73,7 +80,8 @@
     "eslint": "^6.7.2",
     "eslint-plugin-vue": "^6.2.2",
     "typescript": "~4.1.5",
-    "vue-template-compiler": "^2.6.11"
+    "unocss": "^66.5.1",
+    "vue-template-compiler": "2.6.14"
   },
   "eslintConfig": {
     "root": true,

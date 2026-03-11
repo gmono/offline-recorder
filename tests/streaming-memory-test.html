@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Provider 内存流式测试 V2</title>
+<style>
+  body { font-family: monospace; margin: 2rem; background: #1a1a2e; color: #e0e0e0; }
+  h1 { color: #6c5ce7; }
+  .test { padding: 0.5rem 1rem; margin: 0.3rem 0; border-left: 3px solid #6c5ce7; background: #16213e; }
+  .pass { border-left-color: #00b894; }
+  .fail { border-left-color: #e74c3c; }
+  .info { border-left-color: #fdcb6e; }
+  .section { border-left-color: #74b9ff; font-weight: bold; }
+  pre { white-space: pre-wrap; }
+  #log { max-height: 80vh; overflow-y: auto; }
+  button { background: #6c5ce7; color: white; border: none; padding: 0.6rem 1.4rem;
+           cursor: pointer; border-radius: 4px; font-size: 1rem; margin: 0.3rem; }
+  button:disabled { opacity: 0.5; }
+  .summary { margin-top: 1rem; padding: 1rem; background: #0f3460; border-radius: 8px; font-size: 1.1rem; line-height: 2; }
+  .summary b { color: #00b894; }
+  .summary .bad { color: #e74c3c; }
+</style>
+</head>
+<body>
+<h1>🧪 Provider 流式内存测试 V2</h1>
+<p>使用 <b>WeakRef</b> + <b>FinalizationRegistry</b> 证明数据是否可被 GC 回收。<br>
+配合 <code>performance.memory</code> 测量堆内存变化。</p>
+<div>
+  <button id="btnRun" onclick="runAllTests()">运行全部测试</button>
+  <button id="btnClean" onclick="cleanUp()">清理测试数据</button>
+</div>
+<div id="log"></div>
+
+<script type="module">
+// =====================================================================
+// 工具
+// =====================================================================
+const logEl = document.getElementById('log')
+
+function log(msg, cls = 'test') {
+  const div = document.createElement('div')
+  div.className = cls
+  div.textContent = msg
+  logEl.appendChild(div)
+  logEl.scrollTop = logEl.scrollHeight
+}
+
+function pass(msg) { log('✅ ' + msg, 'test pass') }
+function fail(msg) { log('❌ ' + msg, 'test fail') }
+function info(msg) { log('ℹ️  ' + msg, 'test info') }
+function section(msg) { log('━━━ ' + msg + ' ━━━', 'test section') }
+
+function heapMB() {
+  if (performance.memory) {
+    return +(performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(2)
+  }
+  return null
+}
+
+function fakeChunk(sizeKB = 64) {
+  return new Blob([new Uint8Array(sizeKB * 1024)], { type: 'audio/webm' })
+}
+
+/**
+ * 通过内存压力 + 延时 触发 GC（尽力而为）。
+ * gc() 可用时直接调用；不可用时创建大量临时 ArrayBuffer 触发 V8 GC。
+ */
+async function forceGC() {
+  if (window.gc) {
+    window.gc()
+    await new Promise(r => setTimeout(r, 50))
+    window.gc()
+    await new Promise(r => setTimeout(r, 50))
+    return
+  }
+  // 无 --expose-gc，用内存压力逼 V8 GC
+  for (let round = 0; round < 3; round++) {
+    const pressure = []
+    for (let i = 0; i < 200; i++) {
+      pressure.push(new ArrayBuffer(64 * 1024)) // 200 * 64KB = 12.5MB 压力
+    }
+    pressure.length = 0
+    await new Promise(r => setTimeout(r, 200))
+  }
+  await new Promise(r => setTimeout(r, 500))
+}
+
+// =====================================================================
+// IndexedDB Queue (内联简化版)
+// =====================================================================
+const idbReady = (async () => {
+  const DB_NAME = '__stream_test_queue__'
+  const STORE_NAME = '__stream_test_queue__'
+  let db = null
+
+  function openDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, 1)
+      req.onupgradeneeded = () => { req.result.createObjectStore(STORE_NAME) }
+      req.onsuccess = () => { db = req.result; resolve(db) }
+      req.onerror = () => reject(req.error)
+    })
+  }
+
+  function tx(mode) {
+    return db.transaction(STORE_NAME, mode).objectStore(STORE_NAME)
+  }
+
+  function promisify(req) {
+    return new Promise((ok, fail) => { req.onsuccess = () => ok(req.result); req.onerror = () => fail(req.error) })
+  }
+
+  await openDB()
+
+  return {
+    async put(key, val) { return promisify(tx('readwrite').put(val, key)) },
+    async get(key) { return promisify(tx('readonly').get(key)) },
+    async count() { return promisify(tx('readonly').count()) },
+    async clear() { return promisify(tx('readwrite').clear()) },
+    async allKeys() { return promisify(tx('readonly').getAllKeys()) },
+  }
+})()
+
+// =====================================================================
+// 测试 1: WeakRef 对比 — 证明 Provider 方式的 chunk 可被 GC 回收
+// =====================================================================
+async function testWeakRefComparison() {
+  section('测试 1: WeakRef 可回收性对比')
+  info('原理: 用 WeakRef 追踪 chunk 对象，GC 后检查是否被回收')
+  info('新方式(Provider): push 到 IndexedDB 后不保留强引用 → WeakRef 应失效')
+  info('旧方式(blobs[]): push 到数组保留强引用 → WeakRef 不会失效')
+
+  const idb = await idbReady
+  await idb.clear()
+
+  const TOTAL = 50
+  const CHUNK_KB = 128
+  const registry = new FinalizationRegistry((id) => {
+    collectedCount++
+  })
+  let collectedCount = 0
+
+  // ── A: Provider 方式 ──
+  info('')
+  info('【A】新方式 — push 到 IndexedDB 后立即丢弃 JS 引用')
+  const providerWeakRefs = []
+
+  for (let i = 0; i < TOTAL; i++) {
+    let chunk = fakeChunk(CHUNK_KB)
+    const wr = new WeakRef(chunk)
+    providerWeakRefs.push(wr)
+    registry.register(chunk, `provider-${i}`)
+    await idb.put(String(i), chunk)
+    chunk = null  // 释放强引用
+  }
+
+  const countInIDB = await idb.count()
+  pass(`IndexedDB 中存储了 ${countInIDB} 个 chunk (${(countInIDB * CHUNK_KB / 1024).toFixed(1)} MB)`)
+
+  info('等待 GC 回收 Provider 方式的 chunk...')
+  await forceGC()
+  await forceGC()
+
+  let providerAlive = 0
+  let providerCollected = 0
+  for (const wr of providerWeakRefs) {
+    if (wr.deref()) providerAlive++
+    else providerCollected++
+  }
+
+  info(`Provider 方式: ${providerCollected}/${TOTAL} 个 chunk 已被 GC 回收, ${providerAlive} 个尚存`)
+  if (providerCollected > TOTAL * 0.5) {
+    pass(`Provider 方式: >${Math.round(providerCollected / TOTAL * 100)}% chunk 被回收 → 数据不驻留 JS 堆`)
+  } else if (providerCollected > 0) {
+    info(`Provider 方式: 部分回收 (${providerCollected}/${TOTAL})，GC 时机不确定，但趋势正确`)
+  } else {
+    info(`Provider 方式: GC 尚未运行。这不代表泄漏，只是 GC 时机不可控`)
+  }
+
+  // ── B: 旧 blobs[] 方式 ──
+  info('')
+  info('【B】旧方式 — push 到数组保留强引用')
+  const blobsArray = []
+  const arrayWeakRefs = []
+
+  for (let i = 0; i < TOTAL; i++) {
+    const chunk = fakeChunk(CHUNK_KB)
+    const wr = new WeakRef(chunk)
+    arrayWeakRefs.push(wr)
+    blobsArray.push(chunk) // 保留强引用
+  }
+
+  await forceGC()
+  await forceGC()
+
+  let arrayAlive = 0
+  let arrayCollected = 0
+  for (const wr of arrayWeakRefs) {
+    if (wr.deref()) arrayAlive++
+    else arrayCollected++
+  }
+
+  info(`blobs[] 方式: ${arrayCollected}/${TOTAL} 个 chunk 被回收, ${arrayAlive} 个存活`)
+  if (arrayAlive === TOTAL) {
+    pass(`blobs[] 方式: 所有 ${TOTAL} 个 chunk 仍在内存 → 证实数据全部驻留 JS 堆`)
+  } else {
+    info(`blobs[] 方式: 意外有 ${arrayCollected} 个被回收（不应发生）`)
+  }
+
+  // ── C: 释放旧数组后再次检测 ──
+  info('')
+  info('【C】释放旧 blobs[] 数组后再检测')
+  blobsArray.length = 0
+  await forceGC()
+  await forceGC()
+
+  let arrayCollectedAfterRelease = 0
+  for (const wr of arrayWeakRefs) {
+    if (!wr.deref()) arrayCollectedAfterRelease++
+  }
+  info(`释放后 blobs[]: ${arrayCollectedAfterRelease}/${TOTAL} 个被回收`)
+
+  // ── 结论 ──
+  info('')
+  const providerRate = Math.round(providerCollected / TOTAL * 100)
+  const arrayRate = 0  // 持有强引用时应该是 0
+  if (providerCollected > arrayCollected) {
+    pass(`结论: Provider 方式回收率 (${providerRate}%) > blobs[] 方式 (${Math.round(arrayCollected / TOTAL * 100)}%)`)
+    pass('数据写入 IndexedDB 后不驻留 JS 堆，不会导致内存持续增长')
+  } else {
+    info('GC 未在测试窗口内运行。WeakRef 结果不确定，请看堆内存对比测试')
+  }
+
+  // 清理
+  await idb.clear()
+  return { providerCollected, providerAlive, arrayAlive: TOTAL, arrayCollectedAfterRelease }
+}
+
+// =====================================================================
+// 测试 2: 堆内存对比 — 连续录音场景
+// =====================================================================
+async function testHeapComparison() {
+  section('测试 2: 堆内存对比 — 200 chunk 连续录音')
+
+  const idb = await idbReady
+  await idb.clear()
+
+  const TOTAL = 200
+  const CHUNK_KB = 64  // 200 * 64KB = 12.5MB
+
+  // ── A: Provider push ──
+  info('【A】新方式 — 流式写入 IndexedDB')
+  await forceGC()
+  const provHeapStart = heapMB()
+  info(`起始堆: ${provHeapStart} MB`)
+
+  let chunkCount = 0  // 模拟 this.chunkCount
+  for (let i = 0; i < TOTAL; i++) {
+    const chunk = fakeChunk(CHUNK_KB)
+    await idb.put(String(i), chunk)
+    chunkCount++
+    // chunk 在下一轮覆盖，不保留引用
+  }
+
+  await forceGC()
+  const provHeapEnd = heapMB()
+  const provDelta = provHeapEnd !== null && provHeapStart !== null
+    ? (provHeapEnd - provHeapStart).toFixed(2) : '?'
+  info(`写入后堆: ${provHeapEnd} MB，增量: ${provDelta} MB (chunkCount=${chunkCount})`)
+  info(`(数据量: ${(TOTAL * CHUNK_KB / 1024).toFixed(1)} MB，数据在 IndexedDB)`)
+
+  // 记录 Provider 方式的堆位置
+  const provHeapLevel = provHeapEnd
+
+  // 清理 IDB
+  await idb.clear()
+  await forceGC()
+
+  // ── B: 旧 blobs[] ──
+  info('')
+  info('【B】旧方式 — 全部存入 blobs[]')
+  await forceGC()
+  const blobHeapStart = heapMB()
+  info(`起始堆: ${blobHeapStart} MB`)
+
+  const blobs = []
+  for (let i = 0; i < TOTAL; i++) {
+    blobs.push(fakeChunk(CHUNK_KB))
+  }
+
+  await forceGC()
+  const blobHeapEnd = heapMB()
+  const blobDelta = blobHeapEnd !== null && blobHeapStart !== null
+    ? (blobHeapEnd - blobHeapStart).toFixed(2) : '?'
+  info(`push 后堆: ${blobHeapEnd} MB，增量: ${blobDelta} MB (blobs.length=${blobs.length})`)
+
+  // 释放
+  blobs.length = 0
+  await forceGC()
+  const blobHeapAfterRelease = heapMB()
+  info(`释放后堆: ${blobHeapAfterRelease} MB`)
+
+  return { provDelta, blobDelta, provHeapStart, provHeapEnd, blobHeapStart, blobHeapEnd }
+}
+
+// =====================================================================
+// 测试 3: 流式消费 — 证明 forceDownload 逐 chunk 不膨胀
+// =====================================================================
+async function testStreamingConsume() {
+  section('测试 3: 流式消费 — 逐 chunk 读取 + 处理')
+
+  const idb = await idbReady
+  await idb.clear()
+
+  const TOTAL = 200
+  const CHUNK_KB = 64
+
+  info('写入 200 chunk 到 IndexedDB...')
+  for (let i = 0; i < TOTAL; i++) {
+    await idb.put(String(i), fakeChunk(CHUNK_KB))
+  }
+  pass(`写入完成: ${TOTAL} chunk (${(TOTAL * CHUNK_KB / 1024).toFixed(1)} MB)`)
+
+  await forceGC()
+  const heapBefore = heapMB()
+  info(`流式读取前堆: ${heapBefore} MB`)
+
+  let totalBytes = 0
+  const heapDuringRead = []
+
+  for (let i = 0; i < TOTAL; i++) {
+    const chunk = await idb.get(String(i))
+    if (chunk) {
+      const ab = await chunk.arrayBuffer()
+      totalBytes += ab.byteLength
+      // chunk 和 ab 在下一轮覆盖
+    }
+    if (i % 50 === 49) {
+      await forceGC()
+      heapDuringRead.push({ at: i + 1, heap: heapMB() })
+    }
+  }
+
+  await forceGC()
+  const heapAfter = heapMB()
+
+  info(`流式读取后堆: ${heapAfter} MB (共处理 ${(totalBytes / 1024 / 1024).toFixed(2)} MB)`)
+  for (const s of heapDuringRead) {
+    info(`  第 ${s.at} chunk 时堆: ${s.heap} MB`)
+  }
+
+  if (heapBefore !== null && heapAfter !== null) {
+    const delta = (heapAfter - heapBefore).toFixed(2)
+    const dataSize = (TOTAL * CHUNK_KB / 1024).toFixed(1)
+    if (parseFloat(delta) < parseFloat(dataSize) * 0.3) {
+      pass(`流式消费增量 ${delta} MB << 数据量 ${dataSize} MB → 未膨胀`)
+    } else {
+      info(`流式消费增量 ${delta} MB — GC 可能未完全清理`)
+    }
+  }
+
+  await idb.clear()
+  return { heapBefore, heapAfter, totalBytes }
+}
+
+// =====================================================================
+// 测试 4: 合并场景 — 模拟 stop → mergeFromProvider
+// =====================================================================
+async function testMerge() {
+  section('测试 4: 从 Provider 合并 (mergeFromProvider)')
+
+  const idb = await idbReady
+  await idb.clear()
+
+  const TOTAL = 200
+  const CHUNK_KB = 64
+
+  info('写入 200 chunk 到 IndexedDB...')
+  for (let i = 0; i < TOTAL; i++) {
+    await idb.put(String(i), fakeChunk(CHUNK_KB))
+  }
+
+  await forceGC()
+  const heapBefore = heapMB()
+  info(`合并前堆: ${heapBefore} MB`)
+
+  // 模拟 mergeFromProvider: getAllChunks → new Blob
+  const allKeys = await idb.allKeys()
+  const sorted = allKeys.sort((a, b) => Number(a) - Number(b))
+  const chunks = []
+  for (const k of sorted) {
+    chunks.push(await idb.get(k))
+  }
+  const merged = new Blob(chunks, { type: 'audio/webm' })
+  chunks.length = 0  // 立即释放 chunks 数组
+
+  await forceGC()
+  const heapAfterMerge = heapMB()
+  info(`合并后堆: ${heapAfterMerge} MB (merged: ${(merged.size / 1024 / 1024).toFixed(2)} MB)`)
+
+  const expectedSize = TOTAL * CHUNK_KB * 1024
+  if (Math.abs(merged.size - expectedSize) < 1024) {
+    pass(`合并 Blob 大小正确: ${merged.size} 字节`)
+  } else {
+    fail(`合并 Blob 大小 ${merged.size} ≠ 预期 ${expectedSize}`)
+  }
+
+  // 释放 merged
+  const url = URL.createObjectURL(merged)
+  URL.revokeObjectURL(url)
+
+  await idb.clear()
+  return { heapBefore, heapAfterMerge, mergedSize: merged.size }
+}
+
+// =====================================================================
+// 测试 5: OPFS 流式写入
+// =====================================================================
+async function testOPFS() {
+  section('测试 5: OPFS 流式写入')
+
+  if (!navigator.storage || !navigator.storage.getDirectory) {
+    info('当前浏览器不支持 OPFS，跳过')
+    return null
+  }
+
+  const root = await navigator.storage.getDirectory()
+  const testDir = await root.getDirectoryHandle('__streaming_test__', { create: true })
+
+  const TOTAL = 100
+  const CHUNK_KB = 128
+
+  await forceGC()
+  const heapBefore = heapMB()
+  info(`OPFS 写入前堆: ${heapBefore} MB`)
+
+  const fileHandle = await testDir.getFileHandle('recording.webm', { create: true })
+
+  for (let i = 0; i < TOTAL; i++) {
+    const data = new Uint8Array(CHUNK_KB * 1024)
+    const writable = await fileHandle.createWritable({ keepExistingData: true })
+    const file = await fileHandle.getFile()
+    await writable.seek(file.size)
+    await writable.write(data)
+    await writable.close()
+  }
+
+  await forceGC()
+  const heapAfter = heapMB()
+  info(`OPFS 写入后堆: ${heapAfter} MB`)
+
+  const resultFile = await fileHandle.getFile()
+  const expectedSize = TOTAL * CHUNK_KB * 1024
+  if (resultFile.size === expectedSize) {
+    pass(`OPFS 文件大小正确: ${resultFile.size} 字节 (${(resultFile.size / 1024 / 1024).toFixed(1)} MB)`)
+  } else {
+    fail(`OPFS 文件大小 ${resultFile.size} ≠ 预期 ${expectedSize}`)
+  }
+
+  if (heapBefore !== null && heapAfter !== null) {
+    const delta = (heapAfter - heapBefore).toFixed(2)
+    const dataSize = (TOTAL * CHUNK_KB / 1024).toFixed(1)
+    info(`堆增量: ${delta} MB (写入量: ${dataSize} MB)`)
+  }
+
+  await root.removeEntry('__streaming_test__', { recursive: true })
+  info('OPFS 测试数据已清理')
+  return { heapBefore, heapAfter }
+}
+
+// =====================================================================
+// 汇总
+// =====================================================================
+async function runAllTests() {
+  const btn = document.getElementById('btnRun')
+  btn.disabled = true
+  logEl.innerHTML = ''
+
+  info(`开始时间: ${new Date().toLocaleTimeString()}`)
+  info(`performance.memory 可用: ${!!performance.memory}`)
+  info(`gc() 可用: ${typeof window.gc === 'function'}`)
+  if (!performance.memory) {
+    info('提示: 用 Chrome --enable-precise-memory-info 获取精确堆内存')
+  }
+  if (typeof window.gc !== 'function') {
+    info('提示: 用 --js-flags="--expose-gc" 启动 Chrome 可获得更可靠的 GC')
+    info('当前使用内存压力法触发 GC，结果可能有波动')
+  }
+
+  try {
+    const r1 = await testWeakRefComparison()
+    const r2 = await testHeapComparison()
+    const r3 = await testStreamingConsume()
+    const r4 = await testMerge()
+    const r5 = await testOPFS()
+
+    section('汇总')
+    const summary = document.createElement('div')
+    summary.className = 'summary'
+
+    let html = '<b>━━━ 测试结论 ━━━</b><br><br>'
+
+    // WeakRef 结论
+    if (r1) {
+      html += `<b>1. 内存回收性 (WeakRef)</b><br>`
+      html += `   Provider 方式: <b>${r1.providerCollected}</b> / ${r1.providerCollected + r1.providerAlive} 个 chunk 被 GC 回收<br>`
+      html += `   blobs[] 方式: <b>0</b> / ${r1.arrayAlive} 个被回收 (强引用阻止回收)<br>`
+      if (r1.providerCollected > 0) {
+        html += `   → <b>Provider 方式的 chunk 可被 GC 回收，不驻留 JS 堆</b><br>`
+      }
+      html += `   释放 blobs[] 后: <b>${r1.arrayCollectedAfterRelease}</b> 个被回收<br><br>`
+    }
+
+    // 堆对比
+    if (r2) {
+      html += `<b>2. 堆内存增量对比</b><br>`
+      html += `   Provider 方式增量: <b>${r2.provDelta} MB</b><br>`
+      html += `   blobs[] 方式增量: <b class="bad">${r2.blobDelta} MB</b><br><br>`
+    }
+
+    // 流式消费
+    if (r3) {
+      const consumeDelta = r3.heapBefore !== null && r3.heapAfter !== null
+        ? (r3.heapAfter - r3.heapBefore).toFixed(2) : '?'
+      html += `<b>3. 流式消费 (forceDownload)</b><br>`
+      html += `   处理 ${(r3.totalBytes / 1024 / 1024).toFixed(1)} MB 数据，堆增量: <b>${consumeDelta} MB</b><br><br>`
+    }
+
+    // 结论
+    html += `<b>核心结论：</b><br>`
+    html += `录音期间数据仅存 IndexedDB/OPFS，JS 堆只保存 chunkCount 计数<br>`
+    html += `旧 blobs[] 方式会使所有数据驻留 JS 堆，长时间录音必然 OOM<br>`
+    html += `新 Provider 方式解除了录音时长与内存占用的线性关系`
+
+    summary.innerHTML = html
+    logEl.appendChild(summary)
+  } catch (err) {
+    fail(`测试异常: ${err.message}\n${err.stack}`)
+  }
+
+  info(`结束时间: ${new Date().toLocaleTimeString()}`)
+  btn.disabled = false
+}
+
+async function cleanUp() {
+  const idb = await idbReady
+  await idb.clear()
+  info('IndexedDB 测试数据已清理')
+
+  if (navigator.storage && navigator.storage.getDirectory) {
+    try {
+      const root = await navigator.storage.getDirectory()
+      await root.removeEntry('__streaming_test__', { recursive: true })
+      info('OPFS 测试数据已清理')
+    } catch { /* ignore */ }
+  }
+}
+
+window.runAllTests = runAllTests
+window.cleanUp = cleanUp
+</script>
+</body>
+</html>

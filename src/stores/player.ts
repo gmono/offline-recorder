@@ -1,7 +1,6 @@
 import _ from "lodash";
-import { Store } from "vuex";
 
-export default ()=>new Store({
+export default () => ({
     state:{
         //name->info
         //格式就是录音的info格式
@@ -12,12 +11,12 @@ export default ()=>new Store({
     },
     mutations:{
         setNowPlay(state,info){
-            this.nowPlayInfo=info;
+            state.nowPlayInfo = info;
         }
     },
     getters:{
         historyIdxs(state){
-            return _.keys(state.historyInfos)
+            return state.nowPlayInfo ? _.keys({ current: state.nowPlayInfo }) : [];
         }
     },
     actions:{

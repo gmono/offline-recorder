@@ -7,7 +7,7 @@ module.exports = {
   // 选项...
   publicPath: "./",
   lintOnSave: false,
-  parallel: true,
+  parallel: false,
   productionSourceMap: false,
   pwa: {
     name: "通用记录器",

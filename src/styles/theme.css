@@ -1,0 +1,108 @@
+:root {
+  --accent-1: #6c5ce7;
+  --accent-2: #00b4d8;
+  --accent-3: #ff6b9d;
+  --accent-4: #00f5a0;
+  --text-primary: #1f2340;
+  --text-secondary: #52607a;
+  --text-muted: #7c88a1;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#cont,
+#app {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--text-primary);
+  background: #eef1f5;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  border: 0;
+}
+
+::selection {
+  background: rgba(108, 92, 231, 0.18);
+}
+
+.app-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(90px);
+  opacity: 0.55;
+  animation: orbFloat 15s ease-in-out infinite alternate;
+}
+
+@keyframes orbFloat {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(24px, -30px, 0) scale(1.08);
+  }
+  100% {
+    transform: translate3d(-18px, 20px, 0) scale(0.96);
+  }
+}
+
+.wave-bar {
+  animation: wavePulse 1.2s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+.wave-bar:nth-child(2n) {
+  animation-delay: 0.15s;
+}
+
+.wave-bar:nth-child(3n) {
+  animation-delay: 0.3s;
+}
+
+@keyframes wavePulse {
+  0%,
+  100% {
+    transform: scaleY(0.42);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+.app-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.app-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: rgba(108, 92, 231, 0.24);
+}
+
+.fade-up-enter-active,
+.fade-up-leave-active {
+  transition: all 0.2s ease;
+}
+
+.fade-up-enter,
+.fade-up-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
+}

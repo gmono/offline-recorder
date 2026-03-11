@@ -51,7 +51,7 @@ export class IndexedDBStorage implements IStorage {
   async hasBlock(id: string): Promise<boolean> {
     if (this.store)
       //存储到idbstore
-      return (await get(id, this.store)) === undefined;
+      return (await get(id, this.store)) !== undefined;
     else throw new Error("错误，没有初始化");
   }
   async getBlock(id: string): Promise<Blob> {
@@ -67,6 +67,9 @@ export class IndexedDBStorage implements IStorage {
       //存储到idbstore
       await set(id, blob, this.store);
     else throw new Error("错误，没有初始化");
+  }
+  async updateBlock(id: string, blob: Blob): Promise<void> {
+    await this.pushBlock(id, blob);
   }
   async removeBlock(id: string): Promise<void> {
     if (this.store)

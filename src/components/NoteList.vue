@@ -1,40 +1,25 @@
 <template>
   <div>
-    <el-dialog
-      fullscreen
-      append-to-body
-      title="查看记录"
-      :visible.sync="isShowingNote"
-      @keypress.enter="isShowingNote = false"
-    >
-      <show-note :data="nowShowedNote"></show-note>
-      <el-divider></el-divider>
-      <el-button type="primary" @click="isShowingNote = false">关闭</el-button>
-    </el-dialog>
-    <div style="padding:2rem" id="notelist">
-      <el-button
-        v-for="(item, idx) in points"
-        :key="formatDate(item.time)"
-        style="margin-bottom: 1rem; margin-left: 2rem"
-        @click="showRecordingPoint(idx)"
-      >
-        {{
-          "title" in item.note
-            ? `笔记:${item.note.title}`
-            : `标记点:${formatDate(item.time)}`
-        }}
-      </el-button>
-    </div>
+    <RecordingPointList :points="points" @view="openPoint" />
+
+    <UiDialog v-model="isShowingNote" title="查看记录" eyebrow="Timeline">
+      <ShowNote :data="nowShowedNote" />
+    </UiDialog>
   </div>
 </template>
 
 <script>
-//笔记点击事件
-import ShowNote from "./ShowNote.vue";
-import dayjs from "dayjs";
+import RecordingPointList from '@/components/recorder/RecordingPointList.vue'
+import ShowNote from '@/components/ShowNote.vue'
+import UiDialog from '@/components/ui/UiDialog.vue'
+
 export default {
-  components: { ShowNote },
-  //笔记列表
+  name: 'NoteList',
+  components: {
+    RecordingPointList,
+    ShowNote,
+    UiDialog,
+  },
   props: {
     points: {
       type: Array,
@@ -45,29 +30,13 @@ export default {
     return {
       isShowingNote: false,
       nowShowedNote: {},
-    };
+    }
   },
   methods: {
-    formatDate(d) {
-      return dayjs(d).format("YYYY-MM-DD HH:mm:ss");
-    },
-    showRecordingPoint(idx) {
-      let item = this.points[idx];
-      this.nowShowedNote = item;
-      ``;
-      this.isShowingNote = true;
-      ``;
+    openPoint(index) {
+      this.nowShowedNote = this.points[index] || {}
+      this.isShowingNote = true
     },
   },
-};
-</script>
-
-<style scoped>
-#notelist {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  align-items: center;
 }
-</style>
+</script>

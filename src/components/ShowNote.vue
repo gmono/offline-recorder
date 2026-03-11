@@ -1,70 +1,66 @@
 <template>
-  <div>
-    <template v-if="data.type == 'point'">
-      <template v-if="'title' in data.note">
-        <template
-          v-if="
-            data.note.title == data.note.desc &&
-            data.note.desc == data.note.content
-          "
-        >
-          <!-- 记录点 -->
-          <div>记录点:{{ data.note.title }}</div>
-        </template>
-        <template v-else>
-          <el-collapse>
-            <el-collapse-item name="笔记信息" title="笔记信息">
-              <el-form>
-                <el-form-item label="标题">
-                  <el-input
-                    :value="data.note.title"
-                    :disabled="true"
-                    placeholder=""
-                  ></el-input>
-                </el-form-item>
-                <el-form-item label="简述">
-                  <el-input
-                    :value="data.note.desc"
-                    :disabled="true"
-                    placeholder=""
-                  ></el-input>
-                </el-form-item>
-              </el-form>
-            </el-collapse-item>
-          </el-collapse>
+  <div class="space-y-4">
+    <template v-if="data && data.type === 'point'">
+      <div v-if="data.note && typeof data.note === 'object' && 'title' in data.note" class="space-y-4">
+        <div class="grid gap-3 sm:grid-cols-2">
+          <div class="glass-soft px-4 py-3">
+            <div class="text-xs uppercase tracking-[0.18em] text-slate-400">标题</div>
+            <div class="mt-2 text-sm font-semibold text-slate-900">{{ data.note.title }}</div>
+          </div>
+          <div class="glass-soft px-4 py-3">
+            <div class="text-xs uppercase tracking-[0.18em] text-slate-400">简述</div>
+            <div class="mt-2 text-sm font-semibold text-slate-900">{{ data.note.desc }}</div>
+          </div>
+        </div>
 
+        <div v-if="showMarkdown" class="glass-soft overflow-hidden p-2">
           <mavon-editor
-            style="width: 100%"
-            :style="{ height: '60vh' }"
-            v-model="data.note.content"
+            v-model="previewContent"
             :subfield="false"
-            defaultOpen="preview"
+            default-open="preview"
             :editable="false"
             :toolbars="{}"
-          ></mavon-editor>
-        </template>
-        <!-- 笔记 -->
-      </template>
-      <template v-else>
-        <!-- 标记点 -->
-        <div>标记点:{{ data.time }}</div>
-      </template>
+            style="min-height: 360px"
+          />
+        </div>
+        <div v-else class="glass-soft px-4 py-5 text-sm text-slate-700">
+          {{ data.note.title }}
+        </div>
+      </div>
+      <div v-else class="glass-soft px-4 py-5 text-sm text-slate-700">
+        标记点：{{ data.time }}
+      </div>
     </template>
-    <template v-else-if="data.type == 'pause'"> </template>
+    <div v-else-if="data && data.type === 'pause'" class="glass-soft px-4 py-5 text-sm text-slate-700">
+      录制在 {{ data.time || '未知时间' }} 发生暂停。
+    </div>
+    <div v-else class="glass-soft px-4 py-5 text-sm text-slate-500">
+      暂无内容。
+    </div>
   </div>
 </template>
 
 <script>
 export default {
-  //显示笔记 如果是标记点 显示标记点 时间  笔记 显示笔记 不允许编辑
+  name: 'ShowNote',
   props: {
     data: {
       type: Object,
-      default: {},
+      default: () => ({}),
     },
   },
-};
+  computed: {
+    showMarkdown() {
+      return Boolean(this.data?.note?.content && this.data.note.content !== this.data.note.title)
+    },
+    previewContent: {
+      get() {
+        return this.data?.note?.content || ''
+      },
+      set() {
+        // preview only
+      },
+    },
+  },
+}
 </script>
-
-<style lang="scss" scoped>
-</style>

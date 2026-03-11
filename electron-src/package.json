@@ -2,6 +2,7 @@
   "main": "./index.js",
   "name": "recorder",
   "version": "0.1",
+  "packageManager": "pnpm@10.27.0",
   "dependencies": {
     "@types/electron": "^1.6.10"
   }

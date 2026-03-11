@@ -17,25 +17,75 @@ export class RAIDStorage implements IStorage {
     return this.storageQueue[0];
   }
   async entities(): Promise<[string, Blob][]> {
-    return this.mainStorage.entities();
+    let lastError: unknown = null;
+    for (const storage of this.storageQueue) {
+      try {
+        return await storage.entities();
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    throw lastError ?? new Error("没有可用的存储后端");
   }
   async clear(): Promise<void> {
-    return this.mainStorage.clear();
+    await Promise.all(this.storageQueue.map((storage) => storage.clear().catch(() => undefined)));
   }
   async count(): Promise<number> {
-    return this.mainStorage.count();
+    return (await this.entities()).length;
   }
   async hasBlock(id: string): Promise<boolean> {
-    return this.mainStorage.hasBlock(id);
+    for (const storage of this.storageQueue) {
+      try {
+        if (await storage.hasBlock(id)) {
+          return true;
+        }
+      } catch {
+        // ignore and continue fallback
+      }
+    }
+    return false;
   }
   async getBlock(id: string): Promise<Blob> {
-    return this.mainStorage.getBlock(id);
+    let lastError: unknown = null;
+    for (let index = 0; index < this.storageQueue.length; index += 1) {
+      const storage = this.storageQueue[index];
+      try {
+        if (!(await storage.hasBlock(id))) {
+          continue;
+        }
+
+        const blob = await storage.getBlock(id);
+        await Promise.all(
+          this.storageQueue.slice(0, index).map(async (fallback) => {
+            try {
+              if (!(await fallback.hasBlock(id))) {
+                await fallback.pushBlock(id, blob);
+              }
+            } catch {
+              // ignore self-healing failures
+            }
+          }),
+        );
+        return blob;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    throw lastError ?? new Error(`未找到存储块: ${id}`);
   }
   async pushBlock(id: string, blob: Blob): Promise<void> {
-    return this.mainStorage.pushBlock(id, blob);
+    await Promise.all(this.storageQueue.map((storage) => storage.pushBlock(id, blob)));
+  }
+  async updateBlock(id: string, blob: Blob): Promise<void> {
+    await Promise.all(
+      this.storageQueue.map((storage) =>
+        storage.updateBlock ? storage.updateBlock(id, blob) : storage.pushBlock(id, blob),
+      ),
+    );
   }
   async removeBlock(id: string): Promise<void> {
-    return this.mainStorage.removeBlock(id);
+    await Promise.all(this.storageQueue.map((storage) => storage.removeBlock(id).catch(() => undefined)));
   }
 }
 
